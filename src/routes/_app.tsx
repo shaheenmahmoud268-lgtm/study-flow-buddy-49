@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
@@ -27,6 +28,7 @@ type UserDoc = {
   name?: string;
   examBoard?: string;
   onboardingComplete?: boolean;
+  role?: "ceo" | "student";
 };
 
 function AppLayout() {
@@ -54,10 +56,11 @@ function AppLayout() {
     return <Onboarding uid={user.uid} />;
   }
 
-  return <Shell name={userDoc.name ?? "there"} />;
+  return <Shell name={userDoc.name ?? "there"} role={userDoc.role} />;
 }
 
-function Shell({ name }: { name: string }) {
+function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
+  const isCeo = role === "ceo";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
 
@@ -84,7 +87,14 @@ function Shell({ name }: { name: string }) {
           <Sparkles className="h-5 w-5" />
           <span className="font-semibold">StudyFlow</span>
         </div>
-        <p className="mt-1 px-2 text-xs text-muted-foreground truncate">Hi, {name}</p>
+        <p className="mt-1 px-2 text-xs text-muted-foreground truncate flex items-center gap-1">
+          Hi, {name}
+          {isCeo && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
+              <Crown className="h-3 w-3" /> CEO
+            </span>
+          )}
+        </p>
         <nav className="mt-8 flex-1 space-y-1">
           {nav.map((n) => {
             const active = pathname === n.to || pathname.startsWith(n.to + "/");

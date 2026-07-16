@@ -1,13 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { toast } from "sonner";
-import { LogOut, Bell } from "lucide-react";
+import { LogOut, Bell, Crown, Zap, RotateCcw } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { EXAM_BOARDS } from "@/lib/igcse";
-import { useSubjects } from "@/lib/firestore-hooks";
+import { useSubjects, useAllTasks } from "@/lib/firestore-hooks";
+import { todayISO } from "@/lib/dates";
 
 export const Route = createFileRoute("/_app/settings")({
   ssr: false,
@@ -19,10 +28,13 @@ function SettingsPage() {
   const uid = user?.uid;
   const navigate = useNavigate();
   const subjects = useSubjects(uid);
+  const tasks = useAllTasks(uid, subjects);
   const [name, setName] = useState("");
   const [examBoard, setExamBoard] = useState("Cambridge");
   const [notif, setNotif] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState<"ceo" | "student" | undefined>(undefined);
+  const [ceoBusy, setCeoBusy] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -31,11 +43,59 @@ function SettingsPage() {
       if (d) {
         setName(d.name ?? "");
         setExamBoard(d.examBoard ?? "Cambridge");
+        setRole(d.role);
         if (typeof d.notificationsEnabled === "boolean") setNotif(d.notificationsEnabled);
       }
     });
     return unsub;
   }, [uid]);
+
+  const isCeo = role === "ceo";
+
+  const completeAllToday = async () => {
+    if (!uid || !tasks) return;
+    setCeoBusy(true);
+    try {
+      const today = todayISO();
+      const due = tasks.filter((t) => t.dueDate <= today && !t.isComplete);
+      const batch = writeBatch(db);
+      due.forEach((t) => {
+        batch.update(doc(db, "users", uid, "subjects", t.subjectId, "tasks", t.id), {
+          isComplete: true,
+          completedAt: new Date().toISOString(),
+        });
+      });
+      await batch.commit();
+      toast.success(`Completed ${due.length} task(s) instantly`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setCeoBusy(false);
+    }
+  };
+
+  const instantFocusSession = async () => {
+    if (!uid || !subjects?.length) {
+      toast.error("Add a subject first");
+      return;
+    }
+    setCeoBusy(true);
+    try {
+      const subj = subjects[0];
+      await addDoc(collection(db, "users", uid, "focusSessions"), {
+        subjectId: subj.id,
+        subjectName: subj.subjectName,
+        durationMinutes: 25,
+        completedAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Logged an instant 25-min focus session");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setCeoBusy(false);
+    }
+  };
 
   const saveProfile = async () => {
     if (!uid) return;
@@ -67,6 +127,34 @@ function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Settings</h1>
+
+      {isCeo && (
+        <section className="rounded-2xl border border-amber-400/40 bg-amber-400/5 p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-semibold">Elite CEO controls</h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Instant actions available only to your account.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              disabled={ceoBusy}
+              onClick={completeAllToday}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              <Zap className="h-4 w-4" /> Complete all of today's tasks
+            </button>
+            <button
+              disabled={ceoBusy}
+              onClick={instantFocusSession}
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-400/50 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-400/10 disabled:opacity-50"
+            >
+              <RotateCcw className="h-4 w-4" /> Log instant focus session
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Profile</h2>

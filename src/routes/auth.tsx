@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
@@ -16,6 +14,8 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   component: AuthPage,
 });
+
+const CEO_EMAIL = "shaheenmahmoud268@gmail.com";
 
 function AuthPage() {
   const { user, loading } = useAuth();
@@ -31,16 +31,21 @@ function AuthPage() {
 
   if (loading) return <FullPageSpinner />;
 
-  const ensureUserDoc = async (uid: string, fallbackName?: string | null) => {
+  const ensureUserDoc = async (uid: string, userEmail?: string | null, fallbackName?: string | null) => {
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
+    const isCeo = userEmail?.toLowerCase() === CEO_EMAIL;
     if (!snap.exists()) {
       await setDoc(ref, {
         name: fallbackName ?? "",
         examBoard: "",
         onboardingComplete: false,
+        role: isCeo ? "ceo" : "student",
         createdAt: serverTimestamp(),
       });
+    } else if (isCeo && snap.data()?.role !== "ceo") {
+      // Backfill CEO role if the account already existed without it
+      await setDoc(ref, { role: "ceo" }, { merge: true });
     }
   };
 
@@ -50,24 +55,11 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await ensureUserDoc(cred.user.uid);
+        await ensureUserDoc(cred.user.uid, cred.user.email);
       } else {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        await ensureUserDoc(cred.user.uid);
+        await ensureUserDoc(cred.user.uid, cred.user.email);
       }
-      navigate({ to: "/dashboard", replace: true });
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setBusy(true);
-    try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      await ensureUserDoc(cred.user.uid, cred.user.displayName);
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error((err as Error).message);
@@ -93,20 +85,7 @@ function AuthPage() {
               : "A calmer way to study for your IGCSEs."}
           </p>
 
-          <button
-            onClick={handleGoogle}
-            disabled={busy}
-            className="mt-6 w-full rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
-          >
-            Continue with Google
-          </button>
-          <div className="my-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={handleEmail} className="space-y-3">
+          <form onSubmit={handleEmail} className="mt-6 space-y-3">
             <input
               type="email"
               required
