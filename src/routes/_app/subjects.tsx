@@ -1,0 +1,220 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { Pencil, Plus, Trash2, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth-context";
+import { useSubjects, type Subject } from "@/lib/firestore-hooks";
+import { daysUntil } from "@/lib/dates";
+import { GRADES, IGCSE_SUBJECTS } from "@/lib/igcse";
+
+export const Route = createFileRoute("/_app/subjects")({
+  ssr: false,
+  component: SubjectsPage,
+});
+
+function SubjectsPage() {
+  const { user } = useAuth();
+  const subjects = useSubjects(user?.uid);
+  const [editing, setEditing] = useState<Subject | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold">Subjects</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {subjects?.length ?? 0} tracked
+          </p>
+        </div>
+        <button
+          onClick={() => setCreating(true)}
+          className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" /> Add
+        </button>
+      </header>
+
+      {!subjects ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : subjects.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">No subjects added yet — let's add your first one.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {subjects.map((s) => {
+            const days = s.examDate ? daysUntil(s.examDate) : null;
+            return (
+              <li key={s.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-semibold">{s.subjectName}</h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Target {s.targetGrade || "—"} · Exam {s.examDate || "not set"}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setEditing(s)}
+                      className="rounded-lg p-1.5 hover:bg-muted"
+                      aria-label="Edit"
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!user) return;
+                        if (!confirm(`Delete ${s.subjectName}?`)) return;
+                        await deleteDoc(doc(db, "users", user.uid, "subjects", s.id));
+                      }}
+                      className="rounded-lg p-1.5 hover:bg-muted"
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  {days !== null && (
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        days < 0
+                          ? "bg-muted text-muted-foreground"
+                          : days < 30
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {days < 0 ? "past" : `${days} days`}
+                    </span>
+                  )}
+                  <Link
+                    to="/subjects/$subjectId"
+                    params={{ subjectId: s.id }}
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    Open <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {(creating || editing) && (
+        <SubjectDialog
+          initial={editing ?? undefined}
+          onClose={() => {
+            setCreating(false);
+            setEditing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function SubjectDialog({
+  initial,
+  onClose,
+}: {
+  initial?: Subject;
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const [name, setName] = useState(initial?.subjectName ?? "");
+  const [examDate, setExamDate] = useState(initial?.examDate ?? "");
+  const [targetGrade, setTargetGrade] = useState(initial?.targetGrade ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (!user || !name) return;
+    setBusy(true);
+    try {
+      if (initial) {
+        await updateDoc(doc(db, "users", user.uid, "subjects", initial.id), {
+          subjectName: name,
+          examDate,
+          targetGrade,
+        });
+      } else {
+        await addDoc(collection(db, "users", user.uid, "subjects"), {
+          subjectName: name,
+          examDate,
+          targetGrade,
+          createdAt: serverTimestamp(),
+        });
+      }
+      onClose();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-lg">
+        <h2 className="text-lg font-semibold">
+          {initial ? "Edit subject" : "New subject"}
+        </h2>
+        <div className="mt-4 space-y-3">
+          <input
+            list="subject-list"
+            placeholder="Subject name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+          />
+          <datalist id="subject-list">
+            {IGCSE_SUBJECTS.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+          <input
+            type="date"
+            value={examDate}
+            onChange={(e) => setExamDate(e.target.value)}
+            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+          />
+          <select
+            value={targetGrade}
+            onChange={(e) => setTargetGrade(e.target.value)}
+            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+          >
+            <option value="">Target grade</option>
+            {GRADES.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-2xl border border-border px-4 py-2 text-sm">
+            Cancel
+          </button>
+          <button
+            disabled={busy || !name}
+            onClick={save}
+            className="rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {busy ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
