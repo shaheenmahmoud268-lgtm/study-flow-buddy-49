@@ -13,7 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSubjectsRouteImport } from './routes/_app/subjects'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppFocusRouteImport } from './routes/_app/focus'
+import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCheckinRouteImport } from './routes/_app/checkin'
+import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -35,9 +40,34 @@ const AppSubjectsRoute = AppSubjectsRouteImport.update({
   path: '/subjects',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFocusRoute = AppFocusRouteImport.update({
+  id: '/focus',
+  path: '/focus',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFlashcardsRoute = AppFlashcardsRouteImport.update({
+  id: '/flashcards',
+  path: '/flashcards',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCheckinRoute = AppCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
@@ -49,14 +79,24 @@ const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/calendar': typeof AppCalendarRoute
+  '/checkin': typeof AppCheckinRoute
   '/dashboard': typeof AppDashboardRoute
+  '/flashcards': typeof AppFlashcardsRoute
+  '/focus': typeof AppFocusRoute
+  '/settings': typeof AppSettingsRoute
   '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/calendar': typeof AppCalendarRoute
+  '/checkin': typeof AppCheckinRoute
   '/dashboard': typeof AppDashboardRoute
+  '/flashcards': typeof AppFlashcardsRoute
+  '/focus': typeof AppFocusRoute
+  '/settings': typeof AppSettingsRoute
   '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
 }
@@ -65,21 +105,51 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/calendar': typeof AppCalendarRoute
+  '/_app/checkin': typeof AppCheckinRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/flashcards': typeof AppFlashcardsRoute
+  '/_app/focus': typeof AppFocusRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/subjects': typeof AppSubjectsRouteWithChildren
   '/_app/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/subjects' | '/subjects/$subjectId'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/calendar'
+    | '/checkin'
+    | '/dashboard'
+    | '/flashcards'
+    | '/focus'
+    | '/settings'
+    | '/subjects'
+    | '/subjects/$subjectId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/subjects' | '/subjects/$subjectId'
+  to:
+    | '/'
+    | '/auth'
+    | '/calendar'
+    | '/checkin'
+    | '/dashboard'
+    | '/flashcards'
+    | '/focus'
+    | '/settings'
+    | '/subjects'
+    | '/subjects/$subjectId'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/calendar'
+    | '/_app/checkin'
     | '/_app/dashboard'
+    | '/_app/flashcards'
+    | '/_app/focus'
+    | '/_app/settings'
     | '/_app/subjects'
     | '/_app/subjects/$subjectId'
   fileRoutesById: FileRoutesById
@@ -120,11 +190,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubjectsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/focus': {
+      id: '/_app/focus'
+      path: '/focus'
+      fullPath: '/focus'
+      preLoaderRoute: typeof AppFocusRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/flashcards': {
+      id: '/_app/flashcards'
+      path: '/flashcards'
+      fullPath: '/flashcards'
+      preLoaderRoute: typeof AppFlashcardsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/checkin': {
+      id: '/_app/checkin'
+      path: '/checkin'
+      fullPath: '/checkin'
+      preLoaderRoute: typeof AppCheckinRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/subjects/$subjectId': {
@@ -150,12 +255,22 @@ const AppSubjectsRouteWithChildren = AppSubjectsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppCalendarRoute: typeof AppCalendarRoute
+  AppCheckinRoute: typeof AppCheckinRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppFlashcardsRoute: typeof AppFlashcardsRoute
+  AppFocusRoute: typeof AppFocusRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppSubjectsRoute: typeof AppSubjectsRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCalendarRoute: AppCalendarRoute,
+  AppCheckinRoute: AppCheckinRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppFlashcardsRoute: AppFlashcardsRoute,
+  AppFocusRoute: AppFocusRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppSubjectsRoute: AppSubjectsRouteWithChildren,
 }
 
