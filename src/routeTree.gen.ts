@@ -17,6 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppFocusRouteImport } from './routes/_app/focus'
 import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCommandRouteImport } from './routes/_app/command'
 import { Route as AppCheckinRouteImport } from './routes/_app/checkin'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
@@ -60,6 +61,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCommandRoute = AppCommandRouteImport.update({
+  id: '/command',
+  path: '/command',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCheckinRoute = AppCheckinRouteImport.update({
   id: '/checkin',
   path: '/checkin',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
+  '/command': typeof AppCommandRoute
   '/dashboard': typeof AppDashboardRoute
   '/flashcards': typeof AppFlashcardsRoute
   '/focus': typeof AppFocusRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
+  '/command': typeof AppCommandRoute
   '/dashboard': typeof AppDashboardRoute
   '/flashcards': typeof AppFlashcardsRoute
   '/focus': typeof AppFocusRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/checkin': typeof AppCheckinRoute
+  '/_app/command': typeof AppCommandRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/flashcards': typeof AppFlashcardsRoute
   '/_app/focus': typeof AppFocusRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendar'
     | '/checkin'
+    | '/command'
     | '/dashboard'
     | '/flashcards'
     | '/focus'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/calendar'
     | '/checkin'
+    | '/command'
     | '/dashboard'
     | '/flashcards'
     | '/focus'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/calendar'
     | '/_app/checkin'
+    | '/_app/command'
     | '/_app/dashboard'
     | '/_app/flashcards'
     | '/_app/focus'
@@ -218,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/command': {
+      id: '/_app/command'
+      path: '/command'
+      fullPath: '/command'
+      preLoaderRoute: typeof AppCommandRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/checkin': {
       id: '/_app/checkin'
       path: '/checkin'
@@ -257,6 +276,7 @@ const AppSubjectsRouteWithChildren = AppSubjectsRoute._addFileChildren(
 interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppCheckinRoute: typeof AppCheckinRoute
+  AppCommandRoute: typeof AppCommandRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFlashcardsRoute: typeof AppFlashcardsRoute
   AppFocusRoute: typeof AppFocusRoute
@@ -267,6 +287,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppCheckinRoute: AppCheckinRoute,
+  AppCommandRoute: AppCommandRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppFlashcardsRoute: AppFlashcardsRoute,
   AppFocusRoute: AppFocusRoute,
@@ -284,13 +305,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

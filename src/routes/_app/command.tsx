@@ -124,7 +124,7 @@ function CommandCenter() {
   const level = Math.floor(xp / 100) + 1;
   const xpInLevel = xp % 100;
 
-  const run = async (id: string, fn: () => Promise<void>, xpAward = 10) => {
+  const run = async (id: string, fn: () => Promise<unknown>, xpAward = 10) => {
     if (!uid) return;
     setBusy(id);
     try {
@@ -352,7 +352,7 @@ function CommandCenter() {
     title: string;
     desc: string;
     color: string;
-    onClick: () => Promise<void>;
+    onClick: () => Promise<unknown>;
     xp?: number;
   }[] = [
     {
