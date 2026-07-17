@@ -33,7 +33,12 @@ export function getSubjectResources(opts: {
   subjectName: string;
   examBoard?: string;
   level?: string;
-}): { syllabus: ResourceLink[]; pastPapers: ResourceLink[]; videos: ResourceLink[] } {
+}): {
+  syllabus: ResourceLink[];
+  pastPapers: ResourceLink[];
+  videos: ResourceLink[];
+  textbooks: ResourceLink[];
+} {
   const { subjectName } = opts;
   const board = opts.examBoard || "Cambridge";
   const level = opts.level || "IGCSE";
@@ -93,5 +98,40 @@ export function getSubjectResources(opts: {
     },
   ];
 
-  return { syllabus, pastPapers, videos };
+  // Free, legally-licensed textbooks and official publisher preview chapters
+  // only — never pirated copies of copyrighted exam-board textbooks.
+  const textbooks: ResourceLink[] = [
+    {
+      label: "Cambridge University Press — free sample chapters",
+      href: `https://www.cambridge.org/gb/education/find-your-local-office?search=${encode(`${level} ${subjectName}`)}`,
+      description: "Official endorsed coursebooks often have a free downloadable sample chapter on the publisher page.",
+    },
+    {
+      label: "OpenStax",
+      href: `https://openstax.org/subjects`,
+      description: "Free, peer-reviewed, openly-licensed textbooks — strong coverage for Maths, Sciences, Economics.",
+    },
+    {
+      label: "CK-12 FlexBooks",
+      href: `https://www.ck12.org/search/?q=${encode(subjectName)}`,
+      description: "Free, openly-licensed textbooks and interactive material, especially strong for Maths & Science.",
+    },
+    {
+      label: "LibreTexts",
+      href: `https://commons.libretexts.org/search?q=${encode(subjectName)}`,
+      description: "Free, openly-licensed textbook library, strong for Sciences.",
+    },
+    {
+      label: "Open Textbook Library",
+      href: `https://open.umn.edu/opentextbooks/textbooks?term=${encode(subjectName)}`,
+      description: "Searchable catalogue of free, legally-licensed textbooks across subjects.",
+    },
+    {
+      label: "Google Books preview",
+      href: `https://www.google.com/search?tbm=bks&q=${encode(`${query} textbook`)}`,
+      description: "Publisher-authorised preview pages for the exact textbook edition (not a full download).",
+    },
+  ];
+
+  return { syllabus, pastPapers, videos, textbooks };
 }

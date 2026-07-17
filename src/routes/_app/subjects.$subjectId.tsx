@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, BookOpen, FileText, Video, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, BookOpen, Book, FileText, Video, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Task } from "@/lib/firestore-hooks";
@@ -109,18 +109,24 @@ function SubjectDetail() {
         <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-lg font-semibold">Resources</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Syllabus, past papers and revision videos to help you hit your target grade.
+            Syllabus, past papers, free legal textbooks and revision videos to help you hit your
+            target grade.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Textbook links are free, openly-licensed resources or official publisher previews —
+            not pirated copies of copyrighted coursebooks.
           </p>
           {(() => {
-            const { syllabus, pastPapers, videos } = getSubjectResources({
+            const { syllabus, pastPapers, videos, textbooks } = getSubjectResources({
               subjectName: subject.subjectName,
               examBoard: subject.examBoard,
               level: subject.level,
             });
             return (
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <ResourceGroup icon={<BookOpen className="h-4 w-4" />} title="Syllabus" links={syllabus} />
                 <ResourceGroup icon={<FileText className="h-4 w-4" />} title="Past papers" links={pastPapers} />
+                <ResourceGroup icon={<Book className="h-4 w-4" />} title="Free textbooks" links={textbooks} />
                 <ResourceGroup icon={<Video className="h-4 w-4" />} title="Videos" links={videos} />
               </div>
             );
