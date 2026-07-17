@@ -89,6 +89,7 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
     { to: "/flashcards", label: "Cards", icon: Layers },
     { to: "/focus", label: "Focus", icon: Timer },
     { to: "/checkin", label: "Check-in", icon: HeartPulse },
+    ...(isCeo ? [{ to: "/command" as const, label: "Command", icon: Crown }] : []),
     { to: "/settings", label: "Settings", icon: Settings },
   ] as const;
 
