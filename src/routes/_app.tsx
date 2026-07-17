@@ -1,6 +1,14 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { doc, onSnapshot, updateDoc, setDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  setDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import {
   LayoutDashboard,
@@ -103,9 +111,7 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
                 key={n.to}
                 to={n.to}
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm ${
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted"
+                  active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
                 }`}
               >
                 <n.icon className="h-4 w-4" />
@@ -160,9 +166,7 @@ function Onboarding({ uid }: { uid: string }) {
   const [busy, setBusy] = useState(false);
 
   const toggleSubject = (s: string) => {
-    setSubjects((cur) =>
-      cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]
-    );
+    setSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   };
 
   const finish = async () => {
@@ -176,7 +180,7 @@ function Onboarding({ uid }: { uid: string }) {
           onboardingComplete: true,
           createdAt: serverTimestamp(),
         },
-        { merge: true }
+        { merge: true },
       );
       // Create subject docs
       const subCol = collection(db, "users", uid, "subjects");
@@ -187,8 +191,8 @@ function Onboarding({ uid }: { uid: string }) {
             examDate: examDates[s] ?? "",
             targetGrade: targetGrades[s] ?? "",
             createdAt: serverTimestamp(),
-          })
-        )
+          }),
+        ),
       );
     } catch (err) {
       toast.error((err as Error).message);
@@ -287,7 +291,9 @@ function Onboarding({ uid }: { uid: string }) {
           {step === 2 && (
             <>
               <h1 className="mt-1 text-2xl font-semibold">Exam dates & goals</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Set exam date and target grade per subject.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Set exam date and target grade per subject.
+              </p>
               <div className="mt-4 space-y-2 max-h-96 overflow-auto">
                 {subjects.map((s) => (
                   <div
@@ -298,16 +304,12 @@ function Onboarding({ uid }: { uid: string }) {
                     <input
                       type="date"
                       value={examDates[s] ?? ""}
-                      onChange={(e) =>
-                        setExamDates((cur) => ({ ...cur, [s]: e.target.value }))
-                      }
+                      onChange={(e) => setExamDates((cur) => ({ ...cur, [s]: e.target.value }))}
                       className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
                     />
                     <select
                       value={targetGrades[s] ?? ""}
-                      onChange={(e) =>
-                        setTargetGrades((cur) => ({ ...cur, [s]: e.target.value }))
-                      }
+                      onChange={(e) => setTargetGrades((cur) => ({ ...cur, [s]: e.target.value }))}
                       className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
                     >
                       <option value="">Target</option>

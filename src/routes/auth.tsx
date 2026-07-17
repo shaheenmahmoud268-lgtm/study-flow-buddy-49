@@ -1,9 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
@@ -31,7 +28,11 @@ function AuthPage() {
 
   if (loading) return <FullPageSpinner />;
 
-  const ensureUserDoc = async (uid: string, userEmail?: string | null, fallbackName?: string | null) => {
+  const ensureUserDoc = async (
+    uid: string,
+    userEmail?: string | null,
+    fallbackName?: string | null,
+  ) => {
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
     const isCeo = userEmail?.toLowerCase() === CEO_EMAIL;
