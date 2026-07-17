@@ -28,7 +28,7 @@ import {
   type Level,
 } from "@/lib/igcse";
 
-export const Route = createFileRoute("/_app/subjects")({
+export const Route = createFileRoute("/_app/subjects/")({
   ssr: false,
   component: SubjectsPage,
 });

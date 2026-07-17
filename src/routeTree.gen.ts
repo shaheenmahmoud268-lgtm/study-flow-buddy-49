@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppSubjectsRouteImport } from './routes/_app/subjects'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppPlanRouteImport } from './routes/_app/plan'
 import { Route as AppFocusRouteImport } from './routes/_app/focus'
@@ -21,6 +20,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCommandRouteImport } from './routes/_app/command'
 import { Route as AppCheckinRouteImport } from './routes/_app/checkin'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
+import { Route as AppSubjectsIndexRouteImport } from './routes/_app/subjects.index'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -36,11 +36,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppSubjectsRoute = AppSubjectsRouteImport.update({
-  id: '/subjects',
-  path: '/subjects',
-  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -82,10 +77,15 @@ const AppCalendarRoute = AppCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSubjectsIndexRoute = AppSubjectsIndexRouteImport.update({
+  id: '/subjects/',
+  path: '/subjects/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
-  id: '/$subjectId',
-  path: '/$subjectId',
-  getParentRoute: () => AppSubjectsRoute,
+  id: '/subjects/$subjectId',
+  path: '/subjects/$subjectId',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -99,8 +99,8 @@ export interface FileRoutesByFullPath {
   '/focus': typeof AppFocusRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
-  '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/subjects/': typeof AppSubjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -113,8 +113,8 @@ export interface FileRoutesByTo {
   '/focus': typeof AppFocusRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
-  '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/subjects': typeof AppSubjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -129,8 +129,8 @@ export interface FileRoutesById {
   '/_app/focus': typeof AppFocusRoute
   '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRoute
-  '/_app/subjects': typeof AppSubjectsRouteWithChildren
   '/_app/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/_app/subjects/': typeof AppSubjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,8 +145,8 @@ export interface FileRouteTypes {
     | '/focus'
     | '/plan'
     | '/settings'
-    | '/subjects'
     | '/subjects/$subjectId'
+    | '/subjects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,8 +159,8 @@ export interface FileRouteTypes {
     | '/focus'
     | '/plan'
     | '/settings'
-    | '/subjects'
     | '/subjects/$subjectId'
+    | '/subjects'
   id:
     | '__root__'
     | '/'
@@ -174,8 +174,8 @@ export interface FileRouteTypes {
     | '/_app/focus'
     | '/_app/plan'
     | '/_app/settings'
-    | '/_app/subjects'
     | '/_app/subjects/$subjectId'
+    | '/_app/subjects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,13 +206,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_app/subjects': {
-      id: '/_app/subjects'
-      path: '/subjects'
-      fullPath: '/subjects'
-      preLoaderRoute: typeof AppSubjectsRouteImport
-      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -270,27 +263,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/subjects/': {
+      id: '/_app/subjects/'
+      path: '/subjects'
+      fullPath: '/subjects/'
+      preLoaderRoute: typeof AppSubjectsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/subjects/$subjectId': {
       id: '/_app/subjects/$subjectId'
-      path: '/$subjectId'
+      path: '/subjects/$subjectId'
       fullPath: '/subjects/$subjectId'
       preLoaderRoute: typeof AppSubjectsSubjectIdRouteImport
-      parentRoute: typeof AppSubjectsRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
-
-interface AppSubjectsRouteChildren {
-  AppSubjectsSubjectIdRoute: typeof AppSubjectsSubjectIdRoute
-}
-
-const AppSubjectsRouteChildren: AppSubjectsRouteChildren = {
-  AppSubjectsSubjectIdRoute: AppSubjectsSubjectIdRoute,
-}
-
-const AppSubjectsRouteWithChildren = AppSubjectsRoute._addFileChildren(
-  AppSubjectsRouteChildren,
-)
 
 interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
@@ -301,7 +289,8 @@ interface AppRouteChildren {
   AppFocusRoute: typeof AppFocusRoute
   AppPlanRoute: typeof AppPlanRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppSubjectsRoute: typeof AppSubjectsRouteWithChildren
+  AppSubjectsSubjectIdRoute: typeof AppSubjectsSubjectIdRoute
+  AppSubjectsIndexRoute: typeof AppSubjectsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -313,7 +302,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppFocusRoute: AppFocusRoute,
   AppPlanRoute: AppPlanRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppSubjectsRoute: AppSubjectsRouteWithChildren,
+  AppSubjectsSubjectIdRoute: AppSubjectsSubjectIdRoute,
+  AppSubjectsIndexRoute: AppSubjectsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -326,3 +316,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
