@@ -11,12 +11,14 @@ import {
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { toast } from "sonner";
-import { LogOut, Bell, Crown, Zap, RotateCcw } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { LogOut, Bell, Crown, Zap, RotateCcw, UserPlus } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { EXAM_BOARDS } from "@/lib/igcse";
 import { useSubjects, useAllTasks } from "@/lib/firestore-hooks";
 import { todayISO } from "@/lib/dates";
+import { createStudentAccount } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_app/settings")({
   ssr: false,
@@ -35,6 +37,12 @@ function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<"ceo" | "student" | undefined>(undefined);
   const [ceoBusy, setCeoBusy] = useState(false);
+  const createAccount = useServerFn(createStudentAccount);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newBoard, setNewBoard] = useState<"Cambridge" | "Edexcel">("Cambridge");
+  const [creatingAccount, setCreatingAccount] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
@@ -97,6 +105,40 @@ function SettingsPage() {
     }
   };
 
+  const createAccountForStudent = async () => {
+    if (!newEmail || !newPassword || !newName) {
+      toast.error("Fill in name, email and password");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    setCreatingAccount(true);
+    try {
+      const callerIdToken = await currentUser.getIdToken();
+      const result = await createAccount({
+        data: {
+          callerIdToken,
+          email: newEmail,
+          password: newPassword,
+          name: newName,
+          examBoard: newBoard,
+        },
+      });
+      toast.success(`Account created for ${result.email}`);
+      setNewEmail("");
+      setNewPassword("");
+      setNewName("");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
   const saveProfile = async () => {
     if (!uid) return;
     setBusy(true);
@@ -151,6 +193,58 @@ function SettingsPage() {
               className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-400/50 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-400/10 disabled:opacity-50"
             >
               <RotateCcw className="h-4 w-4" /> Log instant focus session
+            </button>
+          </div>
+
+          <div className="mt-5 border-t border-amber-400/30 pt-4">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-amber-500" />
+              <h3 className="text-sm font-semibold">Create a student account</h3>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Creates a real login (email + password) for another student. They can sign in with
+              these credentials immediately.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Student name"
+                className="rounded-2xl border border-input bg-background px-4 py-2 text-sm"
+              />
+              <select
+                value={newBoard}
+                onChange={(e) => setNewBoard(e.target.value as "Cambridge" | "Edexcel")}
+                className="rounded-2xl border border-input bg-background px-4 py-2 text-sm"
+              >
+                {EXAM_BOARDS.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Email"
+                type="email"
+                className="rounded-2xl border border-input bg-background px-4 py-2 text-sm"
+              />
+              <input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Password (min 6 chars)"
+                type="password"
+                className="rounded-2xl border border-input bg-background px-4 py-2 text-sm"
+              />
+            </div>
+            <button
+              disabled={creatingAccount}
+              onClick={createAccountForStudent}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-2xl bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              <UserPlus className="h-4 w-4" />
+              {creatingAccount ? "Creating…" : "Create account"}
             </button>
           </div>
         </section>
