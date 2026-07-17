@@ -81,10 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "StudyFlow — Focus, revise, thrive" },
+      { name: "twitter:description", content: "A calm study and life dashboard for IGCSE students: subjects, revision calendar, flashcards, focus timer, and daily check-ins." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ab0e5bd0-2783-47c6-af7f-447ca61db58c/id-preview-c13a38fd--29efbd5b-3976-4551-b838-a9f155b5b46a.lovable.app-1784286140215.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ab0e5bd0-2783-47c6-af7f-447ca61db58c/id-preview-c13a38fd--29efbd5b-3976-4551-b838-a9f155b5b46a.lovable.app-1784286140215.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
