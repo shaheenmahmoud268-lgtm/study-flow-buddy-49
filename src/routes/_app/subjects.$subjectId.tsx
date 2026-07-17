@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   addDoc,
   collection,
@@ -9,11 +9,12 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, BookOpen, FileText, Video, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Task } from "@/lib/firestore-hooks";
 import { todayISO } from "@/lib/dates";
+import { getSubjectResources, type ResourceLink } from "@/lib/resources";
 
 export const Route = createFileRoute("/_app/subjects/$subjectId")({
   ssr: false,
@@ -31,7 +32,11 @@ function SubjectDetail() {
   const { subjectId } = Route.useParams();
   const { user } = useAuth();
   const uid = user?.uid;
-  const [subject, setSubject] = useState<{ subjectName: string } | null>(null);
+  const [subject, setSubject] = useState<{
+    subjectName: string;
+    examBoard?: string;
+    level?: string;
+  } | null>(null);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [cards, setCards] = useState<Card[] | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -41,7 +46,11 @@ function SubjectDetail() {
   useEffect(() => {
     if (!uid) return;
     const u1 = onSnapshot(doc(db, "users", uid, "subjects", subjectId), (snap) => {
-      setSubject(snap.exists() ? (snap.data() as { subjectName: string }) : null);
+      setSubject(
+        snap.exists()
+          ? (snap.data() as { subjectName: string; examBoard?: string; level?: string })
+          : null,
+      );
     });
     const u2 = onSnapshot(
       collection(db, "users", uid, "subjects", subjectId, "tasks"),
@@ -95,6 +104,29 @@ function SubjectDetail() {
         <ArrowLeft className="h-4 w-4" /> Back
       </Link>
       <h1 className="text-3xl font-semibold">{subject?.subjectName ?? "Loading…"}</h1>
+
+      {subject && (
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">Resources</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Syllabus, past papers and revision videos to help you hit your target grade.
+          </p>
+          {(() => {
+            const { syllabus, pastPapers, videos } = getSubjectResources({
+              subjectName: subject.subjectName,
+              examBoard: subject.examBoard,
+              level: subject.level,
+            });
+            return (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <ResourceGroup icon={<BookOpen className="h-4 w-4" />} title="Syllabus" links={syllabus} />
+                <ResourceGroup icon={<FileText className="h-4 w-4" />} title="Past papers" links={pastPapers} />
+                <ResourceGroup icon={<Video className="h-4 w-4" />} title="Videos" links={videos} />
+              </div>
+            );
+          })()}
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-lg font-semibold">Tasks</h2>
@@ -171,6 +203,40 @@ function SubjectDetail() {
           <Link to="/flashcards" className="text-primary hover:underline">Study →</Link>
         </p>
       </section>
+    </div>
+  );
+}
+
+function ResourceGroup({
+  icon,
+  title,
+  links,
+}: {
+  icon: ReactNode;
+  title: string;
+  links: ResourceLink[];
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-background p-3">
+      <div className="flex items-center gap-1.5 text-sm font-medium">
+        {icon} {title}
+      </div>
+      <ul className="mt-2 space-y-2">
+        {links.map((l) => (
+          <li key={l.href}>
+            <a
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-start gap-1 text-xs text-primary hover:underline"
+            >
+              <span className="flex-1">{l.label}</span>
+              <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 opacity-60 group-hover:opacity-100" />
+            </a>
+            <p className="text-[11px] text-muted-foreground">{l.description}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
