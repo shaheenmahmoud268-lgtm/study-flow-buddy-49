@@ -128,28 +128,45 @@ export const generateElitePlan = createServerFn({ method: "POST" })
 
     const userPrompt = `Today: ${data.today}\nStudent: ${data.studentName}\nHorizon: ${data.horizonDays} days\nFocus minutes last 7 days: ${data.focusMinutesLast7}\n\nSubjects:\n${JSON.stringify(data.subjects, null, 2)}\n\nRecent check-ins (mood 1-5):\n${JSON.stringify(data.recentCheckins, null, 2)}\n\nProduce an adaptive plan covering the next ${data.horizonDays} days.`;
 
-    const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA,
+    const callGemini = async () => {
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
           },
-        }),
-      },
-    );
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: RESPONSE_SCHEMA,
+            },
+          }),
+        },
+      );
+      return res;
+    };
+
+    let res = await callGemini();
+
+    // The model occasionally returns 503 (overloaded) or 429 (rate limited)
+    // under load — these are transient, so retry a few times with backoff
+    // before giving up.
+    let attempt = 0;
+    while ((res.status === 503 || res.status === 429) && attempt < 3) {
+      attempt += 1;
+      await new Promise((r) => setTimeout(r, 500 * 2 ** attempt));
+      res = await callGemini();
+    }
 
     if (!res.ok) {
       const text = await res.text();
       if (res.status === 429) throw new Error("AI rate limit — try again in a moment.");
+      if (res.status === 503)
+        throw new Error("Gemini is temporarily overloaded — please try again in a minute.");
       throw new Error(`Gemini API error ${res.status}: ${text.slice(0, 200)}`);
     }
 
