@@ -25,7 +25,15 @@ import {
 import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, FullPageSpinner } from "@/lib/auth-context";
-import { IGCSE_SUBJECTS, EXAM_BOARDS, GRADES } from "@/lib/igcse";
+import {
+  IGCSE_SUBJECTS,
+  EXAM_BOARDS,
+  GRADES,
+  EXAM_SESSIONS,
+  sessionToISODate,
+  sessionLabel,
+  type ExamSession,
+} from "@/lib/igcse";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
@@ -161,9 +169,24 @@ function Onboarding({ uid }: { uid: string }) {
   const [name, setName] = useState("");
   const [examBoard, setExamBoard] = useState<string>("Cambridge");
   const [subjects, setSubjects] = useState<string[]>([]);
-  const [examDates, setExamDates] = useState<Record<string, string>>({});
+  const [examSessions, setExamSessions] = useState<
+    Record<string, { session: ExamSession; year: number }>
+  >({});
   const [targetGrades, setTargetGrades] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+
+  const setSubjectSession = (s: string, patch: Partial<{ session: ExamSession; year: number }>) => {
+    setExamSessions((cur) => ({
+      ...cur,
+      [s]: {
+        session: cur[s]?.session ?? "May/June",
+        year: cur[s]?.year ?? currentYear,
+        ...patch,
+      },
+    }));
+  };
 
   const toggleSubject = (s: string) => {
     setSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
@@ -188,7 +211,12 @@ function Onboarding({ uid }: { uid: string }) {
         subjects.map((s) =>
           addDoc(subCol, {
             subjectName: s,
-            examDate: examDates[s] ?? "",
+            examDate: examSessions[s]
+              ? sessionToISODate(examSessions[s].session, examSessions[s].year)
+              : "",
+            examSession: examSessions[s]
+              ? sessionLabel(examSessions[s].session, examSessions[s].year)
+              : "",
             targetGrade: targetGrades[s] ?? "",
             createdAt: serverTimestamp(),
           }),
@@ -301,12 +329,30 @@ function Onboarding({ uid }: { uid: string }) {
                     className="rounded-2xl border border-border bg-background/60 p-3 flex flex-col sm:flex-row sm:items-center gap-2"
                   >
                     <div className="flex-1 text-sm font-medium">{s}</div>
-                    <input
-                      type="date"
-                      value={examDates[s] ?? ""}
-                      onChange={(e) => setExamDates((cur) => ({ ...cur, [s]: e.target.value }))}
+                    <select
+                      value={examSessions[s]?.session ?? "May/June"}
+                      onChange={(e) =>
+                        setSubjectSession(s, { session: e.target.value as ExamSession })
+                      }
                       className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
-                    />
+                    >
+                      {EXAM_SESSIONS.map((sess) => (
+                        <option key={sess} value={sess}>
+                          {sess}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={examSessions[s]?.year ?? currentYear}
+                      onChange={(e) => setSubjectSession(s, { year: parseInt(e.target.value, 10) })}
+                      className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
+                    >
+                      {Array.from({ length: 5 }, (_, i) => currentYear + i).map((y) => (
+                        <option key={y} value={y}>
+                          '{String(y).slice(-2)}
+                        </option>
+                      ))}
+                    </select>
                     <select
                       value={targetGrades[s] ?? ""}
                       onChange={(e) => setTargetGrades((cur) => ({ ...cur, [s]: e.target.value }))}

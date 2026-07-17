@@ -6,6 +6,7 @@ export type Subject = {
   id: string;
   subjectName: string;
   examDate: string;
+  examSession?: string;
   targetGrade: string;
   examBoard?: string;
 };

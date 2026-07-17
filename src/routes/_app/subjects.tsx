@@ -15,7 +15,16 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useSubjects, type Subject } from "@/lib/firestore-hooks";
 import { daysUntil } from "@/lib/dates";
-import { GRADES, IGCSE_SUBJECTS, EXAM_BOARDS } from "@/lib/igcse";
+import {
+  GRADES,
+  IGCSE_SUBJECTS,
+  EXAM_BOARDS,
+  EXAM_SESSIONS,
+  sessionToISODate,
+  sessionLabel,
+  parseSessionLabel,
+  type ExamSession,
+} from "@/lib/igcse";
 
 export const Route = createFileRoute("/_app/subjects")({
   ssr: false,
@@ -62,7 +71,8 @@ function SubjectsPage() {
                     <h3 className="font-semibold">{s.subjectName}</h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {s.examBoard ? `${s.examBoard} · ` : ""}
-                      Target {s.targetGrade || "—"} · Exam {s.examDate || "not set"}
+                      Target {s.targetGrade || "—"} · Exam{" "}
+                      {s.examSession || s.examDate || "not set"}
                     </p>
                   </div>
                   <div className="flex gap-1">
@@ -130,7 +140,10 @@ function SubjectsPage() {
 function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () => void }) {
   const { user } = useAuth();
   const [name, setName] = useState(initial?.subjectName ?? "");
-  const [examDate, setExamDate] = useState(initial?.examDate ?? "");
+  const currentYear = new Date().getFullYear();
+  const parsedInitial = initial?.examSession ? parseSessionLabel(initial.examSession) : null;
+  const [session, setSession] = useState<ExamSession>(parsedInitial?.session ?? "May/June");
+  const [year, setYear] = useState<number>(parsedInitial?.year ?? currentYear);
   const [targetGrade, setTargetGrade] = useState(initial?.targetGrade ?? "");
   const [examBoard, setExamBoard] = useState(initial?.examBoard ?? "");
   const [busy, setBusy] = useState(false);
@@ -151,14 +164,16 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
       if (initial) {
         await updateDoc(doc(db, "users", user.uid, "subjects", initial.id), {
           subjectName: name,
-          examDate,
+          examDate: sessionToISODate(session, year),
+          examSession: sessionLabel(session, year),
           targetGrade,
           examBoard,
         });
       } else {
         await addDoc(collection(db, "users", user.uid, "subjects"), {
           subjectName: name,
-          examDate,
+          examDate: sessionToISODate(session, year),
+          examSession: sessionLabel(session, year),
           targetGrade,
           examBoard,
           createdAt: serverTimestamp(),
@@ -201,12 +216,30 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
               </option>
             ))}
           </select>
-          <input
-            type="date"
-            value={examDate}
-            onChange={(e) => setExamDate(e.target.value)}
-            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
-          />
+          <div className="flex gap-2">
+            <select
+              value={session}
+              onChange={(e) => setSession(e.target.value as ExamSession)}
+              className="flex-1 rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+            >
+              {EXAM_SESSIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(parseInt(e.target.value, 10))}
+              className="w-24 rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+            >
+              {Array.from({ length: 5 }, (_, i) => currentYear + i).map((y) => (
+                <option key={y} value={y}>
+                  '{String(y).slice(-2)}
+                </option>
+              ))}
+            </select>
+          </div>
           <select
             value={targetGrade}
             onChange={(e) => setTargetGrade(e.target.value)}
