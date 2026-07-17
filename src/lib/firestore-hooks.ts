@@ -9,6 +9,7 @@ export type Subject = {
   examSession?: string;
   targetGrade: string;
   examBoard?: string;
+  level?: string;
 };
 
 export type Task = {

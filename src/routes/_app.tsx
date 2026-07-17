@@ -26,13 +26,15 @@ import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, FullPageSpinner } from "@/lib/auth-context";
 import {
-  IGCSE_SUBJECTS,
   EXAM_BOARDS,
   GRADES,
   EXAM_SESSIONS,
   sessionToISODate,
   sessionLabel,
   type ExamSession,
+  LEVELS,
+  subjectsForLevel,
+  type Level,
 } from "@/lib/igcse";
 
 export const Route = createFileRoute("/_app")({
@@ -169,6 +171,7 @@ function Onboarding({ uid }: { uid: string }) {
   const [name, setName] = useState("");
   const [examBoard, setExamBoard] = useState<string>("Cambridge");
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [activeLevel, setActiveLevel] = useState<Level>("O-Level");
   const [examSessions, setExamSessions] = useState<
     Record<string, { session: ExamSession; year: number }>
   >({});
@@ -188,8 +191,14 @@ function Onboarding({ uid }: { uid: string }) {
     }));
   };
 
-  const toggleSubject = (s: string) => {
-    setSubjects((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+  const toggleSubject = (s: string, level: Level) => {
+    const key = `${level}|${s}`;
+    setSubjects((cur) => (cur.includes(key) ? cur.filter((x) => x !== key) : [...cur, key]));
+  };
+
+  const splitKey = (key: string) => {
+    const [level, ...rest] = key.split("|");
+    return { level: level as Level, name: rest.join("|") };
   };
 
   const finish = async () => {
@@ -208,19 +217,21 @@ function Onboarding({ uid }: { uid: string }) {
       // Create subject docs
       const subCol = collection(db, "users", uid, "subjects");
       await Promise.all(
-        subjects.map((s) =>
-          addDoc(subCol, {
-            subjectName: s,
-            examDate: examSessions[s]
-              ? sessionToISODate(examSessions[s].session, examSessions[s].year)
+        subjects.map((key) => {
+          const { level, name: subjectName } = splitKey(key);
+          return addDoc(subCol, {
+            subjectName,
+            level,
+            examDate: examSessions[key]
+              ? sessionToISODate(examSessions[key].session, examSessions[key].year)
               : "",
-            examSession: examSessions[s]
-              ? sessionLabel(examSessions[s].session, examSessions[s].year)
+            examSession: examSessions[key]
+              ? sessionLabel(examSessions[key].session, examSessions[key].year)
               : "",
-            targetGrade: targetGrades[s] ?? "",
+            targetGrade: targetGrades[key] ?? "",
             createdAt: serverTimestamp(),
-          }),
-        ),
+          });
+        }),
       );
     } catch (err) {
       toast.error((err as Error).message);
@@ -279,14 +290,35 @@ function Onboarding({ uid }: { uid: string }) {
           {step === 1 && (
             <>
               <h1 className="mt-1 text-2xl font-semibold">Pick your subjects</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Choose the ones you're studying.</p>
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-auto">
-                {IGCSE_SUBJECTS.map((s) => {
-                  const on = subjects.includes(s);
+              <p className="mt-1 text-sm text-muted-foreground">
+                Choose the ones you're studying, at each level.
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {LEVELS.map((lvl) => {
+                  const countAtLevel = subjects.filter((k) => splitKey(k).level === lvl).length;
+                  return (
+                    <button
+                      key={lvl}
+                      onClick={() => setActiveLevel(lvl)}
+                      className={`rounded-2xl border px-4 py-2.5 text-sm font-medium ${
+                        activeLevel === lvl
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card hover:bg-muted"
+                      }`}
+                    >
+                      {lvl}
+                      {countAtLevel > 0 ? ` (${countAtLevel})` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-auto">
+                {subjectsForLevel(activeLevel).map((s) => {
+                  const on = subjects.includes(`${activeLevel}|${s}`);
                   return (
                     <button
                       key={s}
-                      onClick={() => toggleSubject(s)}
+                      onClick={() => toggleSubject(s, activeLevel)}
                       className={`rounded-2xl border px-3 py-2 text-xs sm:text-sm ${
                         on
                           ? "border-primary bg-primary text-primary-foreground"
@@ -298,6 +330,12 @@ function Onboarding({ uid }: { uid: string }) {
                   );
                 })}
               </div>
+              {subjects.length > 0 && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {subjects.length} subject{subjects.length === 1 ? "" : "s"} selected across both
+                  levels.
+                </p>
+              )}
               <div className="mt-6 flex justify-between">
                 <button
                   onClick={() => setStep(0)}
@@ -328,7 +366,12 @@ function Onboarding({ uid }: { uid: string }) {
                     key={s}
                     className="rounded-2xl border border-border bg-background/60 p-3 flex flex-col sm:flex-row sm:items-center gap-2"
                   >
-                    <div className="flex-1 text-sm font-medium">{s}</div>
+                    <div className="flex-1 text-sm font-medium">
+                      {splitKey(s).name}
+                      <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-normal text-secondary-foreground">
+                        {splitKey(s).level}
+                      </span>
+                    </div>
                     <select
                       value={examSessions[s]?.session ?? "May/June"}
                       onChange={(e) =>

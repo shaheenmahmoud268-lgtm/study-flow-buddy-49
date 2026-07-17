@@ -17,13 +17,15 @@ import { useSubjects, type Subject } from "@/lib/firestore-hooks";
 import { daysUntil } from "@/lib/dates";
 import {
   GRADES,
-  IGCSE_SUBJECTS,
   EXAM_BOARDS,
   EXAM_SESSIONS,
   sessionToISODate,
   sessionLabel,
   parseSessionLabel,
   type ExamSession,
+  LEVELS,
+  subjectsForLevel,
+  type Level,
 } from "@/lib/igcse";
 
 export const Route = createFileRoute("/_app/subjects")({
@@ -68,7 +70,14 @@ function SubjectsPage() {
               <li key={s.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold">{s.subjectName}</h3>
+                    <h3 className="font-semibold">
+                      {s.subjectName}
+                      {s.level && (
+                        <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-normal align-middle text-secondary-foreground">
+                          {s.level}
+                        </span>
+                      )}
+                    </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {s.examBoard ? `${s.examBoard} · ` : ""}
                       Target {s.targetGrade || "—"} · Exam{" "}
@@ -139,6 +148,7 @@ function SubjectsPage() {
 
 function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () => void }) {
   const { user } = useAuth();
+  const [level, setLevel] = useState<Level>((initial?.level as Level) ?? "O-Level");
   const [name, setName] = useState(initial?.subjectName ?? "");
   const currentYear = new Date().getFullYear();
   const parsedInitial = initial?.examSession ? parseSessionLabel(initial.examSession) : null;
@@ -164,6 +174,7 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
       if (initial) {
         await updateDoc(doc(db, "users", user.uid, "subjects", initial.id), {
           subjectName: name,
+          level,
           examDate: sessionToISODate(session, year),
           examSession: sessionLabel(session, year),
           targetGrade,
@@ -172,6 +183,7 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
       } else {
         await addDoc(collection(db, "users", user.uid, "subjects"), {
           subjectName: name,
+          level,
           examDate: sessionToISODate(session, year),
           examSession: sessionLabel(session, year),
           targetGrade,
@@ -192,6 +204,20 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-lg">
         <h2 className="text-lg font-semibold">{initial ? "Edit subject" : "New subject"}</h2>
         <div className="mt-4 space-y-3">
+          <select
+            value={level}
+            onChange={(e) => {
+              setLevel(e.target.value as Level);
+              setName("");
+            }}
+            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+          >
+            {LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
           <input
             list="subject-list"
             placeholder="Subject name"
@@ -200,7 +226,7 @@ function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () =>
             className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
           />
           <datalist id="subject-list">
-            {IGCSE_SUBJECTS.map((s) => (
+            {subjectsForLevel(level).map((s) => (
               <option key={s} value={s} />
             ))}
           </datalist>

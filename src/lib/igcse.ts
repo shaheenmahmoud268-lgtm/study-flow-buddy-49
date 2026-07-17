@@ -26,6 +26,36 @@ export const IGCSE_SUBJECTS = [
   "Accounting",
 ];
 
+export const O_LEVEL_SUBJECTS = IGCSE_SUBJECTS;
+
+export const A_LEVEL_SUBJECTS = [
+  "Mathematics",
+  "Further Mathematics",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "History",
+  "Geography",
+  "Economics",
+  "Business Studies",
+  "Computer Science",
+  "French",
+  "Spanish",
+  "Psychology",
+  "Sociology",
+  "Accounting",
+  "Art & Design",
+  "English Literature",
+  "Law",
+];
+
+export const LEVELS = ["O-Level", "A-Level"] as const;
+export type Level = (typeof LEVELS)[number];
+
+export function subjectsForLevel(level: Level): string[] {
+  return level === "A-Level" ? A_LEVEL_SUBJECTS : O_LEVEL_SUBJECTS;
+}
+
 export const EXAM_BOARDS = ["Cambridge", "Edexcel"] as const;
 export type ExamBoard = (typeof EXAM_BOARDS)[number];
 
