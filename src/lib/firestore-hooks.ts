@@ -7,6 +7,7 @@ export type Subject = {
   subjectName: string;
   examDate: string;
   targetGrade: string;
+  examBoard?: string;
 };
 
 export type Task = {
@@ -25,9 +26,7 @@ export function useSubjects(uid: string | undefined) {
   useEffect(() => {
     if (!uid) return;
     const unsub = onSnapshot(collection(db, "users", uid, "subjects"), (snap) => {
-      setSubjects(
-        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Subject, "id">) }))
-      );
+      setSubjects(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Subject, "id">) })));
     });
     return unsub;
   }, [uid]);
@@ -54,12 +53,12 @@ export function useAllTasks(uid: string | undefined, subjects: Subject[] | null)
               subjectId: s.id,
               subjectName: s.subjectName,
               ...(d.data() as Omit<Task, "id" | "subjectId" | "subjectName">),
-            }))
+            })),
           );
           const merged: Task[] = [];
           perSubject.forEach((arr) => merged.push(...arr));
           setTasks(merged);
-        }
+        },
       );
     });
     return () => unsubs.forEach((u) => u());

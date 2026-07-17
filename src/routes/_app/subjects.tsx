@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  onSnapshot,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -14,7 +15,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useSubjects, type Subject } from "@/lib/firestore-hooks";
 import { daysUntil } from "@/lib/dates";
-import { GRADES, IGCSE_SUBJECTS } from "@/lib/igcse";
+import { GRADES, IGCSE_SUBJECTS, EXAM_BOARDS } from "@/lib/igcse";
 
 export const Route = createFileRoute("/_app/subjects")({
   ssr: false,
@@ -32,9 +33,7 @@ function SubjectsPage() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Subjects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {subjects?.length ?? 0} tracked
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{subjects?.length ?? 0} tracked</p>
         </div>
         <button
           onClick={() => setCreating(true)}
@@ -48,7 +47,9 @@ function SubjectsPage() {
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : subjects.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">No subjects added yet — let's add your first one.</p>
+          <p className="text-sm text-muted-foreground">
+            No subjects added yet — let's add your first one.
+          </p>
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -60,6 +61,7 @@ function SubjectsPage() {
                   <div>
                     <h3 className="font-semibold">{s.subjectName}</h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
+                      {s.examBoard ? `${s.examBoard} · ` : ""}
                       Target {s.targetGrade || "—"} · Exam {s.examDate || "not set"}
                     </p>
                   </div>
@@ -91,8 +93,8 @@ function SubjectsPage() {
                         days < 0
                           ? "bg-muted text-muted-foreground"
                           : days < 30
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-secondary text-secondary-foreground"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-secondary text-secondary-foreground"
                       }`}
                     >
                       {days < 0 ? "past" : `${days} days`}
@@ -125,18 +127,22 @@ function SubjectsPage() {
   );
 }
 
-function SubjectDialog({
-  initial,
-  onClose,
-}: {
-  initial?: Subject;
-  onClose: () => void;
-}) {
+function SubjectDialog({ initial, onClose }: { initial?: Subject; onClose: () => void }) {
   const { user } = useAuth();
   const [name, setName] = useState(initial?.subjectName ?? "");
   const [examDate, setExamDate] = useState(initial?.examDate ?? "");
   const [targetGrade, setTargetGrade] = useState(initial?.targetGrade ?? "");
+  const [examBoard, setExamBoard] = useState(initial?.examBoard ?? "");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (initial?.examBoard || !user) return;
+    const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      const accountBoard = snap.data()?.examBoard;
+      if (accountBoard) setExamBoard((prev) => prev || accountBoard);
+    });
+    return unsub;
+  }, [user, initial?.examBoard]);
 
   const save = async () => {
     if (!user || !name) return;
@@ -147,12 +153,14 @@ function SubjectDialog({
           subjectName: name,
           examDate,
           targetGrade,
+          examBoard,
         });
       } else {
         await addDoc(collection(db, "users", user.uid, "subjects"), {
           subjectName: name,
           examDate,
           targetGrade,
+          examBoard,
           createdAt: serverTimestamp(),
         });
       }
@@ -167,9 +175,7 @@ function SubjectDialog({
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-lg">
-        <h2 className="text-lg font-semibold">
-          {initial ? "Edit subject" : "New subject"}
-        </h2>
+        <h2 className="text-lg font-semibold">{initial ? "Edit subject" : "New subject"}</h2>
         <div className="mt-4 space-y-3">
           <input
             list="subject-list"
@@ -183,6 +189,18 @@ function SubjectDialog({
               <option key={s} value={s} />
             ))}
           </datalist>
+          <select
+            value={examBoard}
+            onChange={(e) => setExamBoard(e.target.value)}
+            className="w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
+          >
+            <option value="">Exam board (defaults to account board)</option>
+            {EXAM_BOARDS.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
           <input
             type="date"
             value={examDate}
