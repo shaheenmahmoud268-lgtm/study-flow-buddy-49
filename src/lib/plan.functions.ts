@@ -129,7 +129,7 @@ export const generateElitePlan = createServerFn({ method: "POST" })
     const userPrompt = `Today: ${data.today}\nStudent: ${data.studentName}\nHorizon: ${data.horizonDays} days\nFocus minutes last 7 days: ${data.focusMinutesLast7}\n\nSubjects:\n${JSON.stringify(data.subjects, null, 2)}\n\nRecent check-ins (mood 1-5):\n${JSON.stringify(data.recentCheckins, null, 2)}\n\nProduce an adaptive plan covering the next ${data.horizonDays} days.`;
 
     const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
       {
         method: "POST",
         headers: {
