@@ -21,6 +21,7 @@ import {
   LogOut,
   Sparkles,
   Crown,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
@@ -85,6 +86,7 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
   const nav = [
     { to: "/dashboard", label: "Home", icon: LayoutDashboard },
     { to: "/subjects", label: "Subjects", icon: BookOpen },
+    { to: "/plan", label: "Plan", icon: Brain },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
     { to: "/flashcards", label: "Cards", icon: Layers },
     { to: "/focus", label: "Focus", icon: Timer },
