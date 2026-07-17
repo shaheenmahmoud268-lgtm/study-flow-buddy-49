@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSubjectsRouteImport } from './routes/_app/subjects'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppPlanRouteImport } from './routes/_app/plan'
 import { Route as AppFocusRouteImport } from './routes/_app/focus'
 import { Route as AppFlashcardsRouteImport } from './routes/_app/flashcards'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -44,6 +45,11 @@ const AppSubjectsRoute = AppSubjectsRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlanRoute = AppPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFocusRoute = AppFocusRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/flashcards': typeof AppFlashcardsRoute
   '/focus': typeof AppFocusRoute
+  '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/flashcards': typeof AppFlashcardsRoute
   '/focus': typeof AppFocusRoute
+  '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/subjects': typeof AppSubjectsRouteWithChildren
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/flashcards': typeof AppFlashcardsRoute
   '/_app/focus': typeof AppFocusRoute
+  '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subjects': typeof AppSubjectsRouteWithChildren
   '/_app/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flashcards'
     | '/focus'
+    | '/plan'
     | '/settings'
     | '/subjects'
     | '/subjects/$subjectId'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/flashcards'
     | '/focus'
+    | '/plan'
     | '/settings'
     | '/subjects'
     | '/subjects/$subjectId'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/flashcards'
     | '/_app/focus'
+    | '/_app/plan'
     | '/_app/settings'
     | '/_app/subjects'
     | '/_app/subjects/$subjectId'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/plan': {
+      id: '/_app/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AppPlanRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/focus': {
@@ -280,6 +299,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppFlashcardsRoute: typeof AppFlashcardsRoute
   AppFocusRoute: typeof AppFocusRoute
+  AppPlanRoute: typeof AppPlanRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubjectsRoute: typeof AppSubjectsRouteWithChildren
 }
@@ -291,6 +311,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppFlashcardsRoute: AppFlashcardsRoute,
   AppFocusRoute: AppFocusRoute,
+  AppPlanRoute: AppPlanRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSubjectsRoute: AppSubjectsRouteWithChildren,
 }
