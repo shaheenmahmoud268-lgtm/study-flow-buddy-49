@@ -25,8 +25,35 @@ const BOARD_PAST_PAPERS_HUB: Record<string, string> = {
   Edexcel: "https://qualifications.pearson.com/en/support/support-topics/exams/past-papers.html",
 };
 
+// Verified full-syllabus YouTube playlists for common IGCSE subjects. These
+// were checked to be real, current, complete-syllabus playlists (not single
+// videos) at the time of writing. Subjects not listed fall back to a
+// dynamic YouTube search, which is safer than guessing an unverified link.
+const KNOWN_FULL_PLAYLISTS: Record<string, { label: string; href: string }> = {
+  chemistry: {
+    label: "IGCSE Chemistry — full syllabus playlist",
+    href: "https://www.youtube.com/playlist?list=PLL824lXFgrJjrqXDav3u4EpVd9j4GC_5i",
+  },
+  physics: {
+    label: "IGCSE Physics — full syllabus playlist",
+    href: "https://www.youtube.com/playlist?list=PLL824lXFgrJiZnZuG8o1-VyGl_V0fgpzm",
+  },
+  mathematics: {
+    label: "IGCSE Maths — full syllabus playlist",
+    href: "https://www.youtube.com/playlist?list=PLYNwTLhq9xZbbYnEipbmqFWb4b-NpOkpd",
+  },
+  maths: {
+    label: "IGCSE Maths — full syllabus playlist",
+    href: "https://www.youtube.com/playlist?list=PLYNwTLhq9xZbbYnEipbmqFWb4b-NpOkpd",
+  },
+};
+
 function encode(s: string) {
   return encodeURIComponent(s);
+}
+
+function getKnownPlaylist(subjectName: string) {
+  return KNOWN_FULL_PLAYLISTS[subjectName.trim().toLowerCase()];
 }
 
 export function getSubjectResources(opts: {
@@ -64,9 +91,14 @@ export function getSubjectResources(opts: {
       description: "Official past papers, mark schemes and examiner reports.",
     },
     {
+      label: "All past papers (direct PDF search)",
+      href: `https://www.google.com/search?q=${encode(`${query} past papers all sessions mark scheme`)}&tbs=filetype:pdf`,
+      description: "Search narrowed to PDF files only — fastest way to pull every session's paper.",
+    },
+    {
       label: "Past Papers on PapaCambridge",
-      href: `https://pastpapers.papacambridge.com/?s=${encode(`${board} ${subjectName}`)}`,
-      description: "Free searchable archive of past papers and mark schemes.",
+      href: `https://pastpapers.papacambridge.com/?s=${encode(`${board} ${subjectName} ${level}`)}`,
+      description: "Free searchable archive of past papers and mark schemes, organised by year.",
     },
     {
       label: "Physics & Maths Tutor",
@@ -80,11 +112,21 @@ export function getSubjectResources(opts: {
     },
   ];
 
+  const known = getKnownPlaylist(subjectName);
   const videos: ResourceLink[] = [
+    ...(known
+      ? [
+          {
+            label: known.label,
+            href: known.href,
+            description: "A verified, complete playlist covering the whole syllabus topic-by-topic.",
+          },
+        ]
+      : []),
     {
       label: `YouTube: ${subjectName} full course`,
-      href: `https://www.youtube.com/results?search_query=${encode(`${query} full revision course`)}`,
-      description: "Complete syllabus walkthroughs and crash courses.",
+      href: `https://www.youtube.com/results?search_query=${encode(`${query} full revision course playlist`)}`,
+      description: "Search for complete syllabus walkthroughs and crash courses.",
     },
     {
       label: `YouTube: ${subjectName} past paper solutions`,
