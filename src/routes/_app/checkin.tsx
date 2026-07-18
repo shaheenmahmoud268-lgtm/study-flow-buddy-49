@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { toISO } from "@/lib/dates";
 import { useEffect, useMemo, useState } from "react";
 import {
   collection,
@@ -91,7 +92,7 @@ function CheckinPage() {
     for (let i = 13; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toISO(d);
       const c = checkins.find((x) => x.date === iso);
       days.push({
         day: d.toLocaleDateString(undefined, { weekday: "short" }),
@@ -107,7 +108,7 @@ function CheckinPage() {
     for (let i = 0; i < 30; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toISO(d);
       const c = checkins.find((x) => x.date === iso);
       if (c && c.mood <= 3) count++;
       else break;

@@ -7,6 +7,7 @@ import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useSubjects } from "@/lib/firestore-hooks";
+import { todayISO, toISO } from "@/lib/dates";
 
 export const Route = createFileRoute("/_app/focus")({
   ssr: false,
@@ -87,12 +88,12 @@ function FocusPage() {
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
   const chartData = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayISO();
     const days: { day: string; minutes: number; date: string }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toISO(d);
       const mins = sessions
         .filter((s) => s.completedAt?.slice(0, 10) === iso)
         .reduce((sum, s) => sum + (s.durationMinutes || 0), 0);

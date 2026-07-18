@@ -6,7 +6,7 @@ import { Flame, Timer, CheckCircle2, Circle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { useSubjects, useAllTasks, type Task } from "@/lib/firestore-hooks";
-import { todayISO } from "@/lib/dates";
+import { todayISO, toISO } from "@/lib/dates";
 
 export const Route = createFileRoute("/_app/dashboard")({
   ssr: false,
@@ -48,7 +48,7 @@ function Dashboard() {
     let count = 0;
     const d = new Date();
     while (true) {
-      const iso = d.toISOString().slice(0, 10);
+      const iso = toISO(d);
       if (days.has(iso)) {
         count++;
         d.setDate(d.getDate() - 1);
