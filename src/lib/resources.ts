@@ -99,42 +99,41 @@ export function getSubjectResources(opts: {
   ];
 
   const subjectPastPaperLink = getSubjectPastPaperLink(subjectName);
-  const pastPapers: ResourceLink[] = [
-    ...(subjectPastPaperLink
-      ? [
-          {
-            label: subjectPastPaperLink.label,
-            href: subjectPastPaperLink.href,
-            description: "Direct link to the full past-paper archive for this exact subject/level.",
-          },
-        ]
-      : []),
-    {
-      label: `${board} official past papers hub`,
-      href: BOARD_PAST_PAPERS_HUB[board] ?? `https://www.google.com/search?q=${encode(`${query} past papers`)}`,
-      description: "Official past papers, mark schemes and examiner reports.",
-    },
-    {
-      label: "All past papers (direct PDF search)",
-      href: `https://www.google.com/search?q=${encode(`${query} past papers all sessions mark scheme`)}&tbs=filetype:pdf`,
-      description: "Search narrowed to PDF files only — fastest way to pull every session's paper.",
-    },
-    {
-      label: "Past Papers on PapaCambridge",
-      href: `https://pastpapers.papacambridge.com/?s=${encode(`${board} ${subjectName} ${level}`)}`,
-      description: "Free searchable archive of past papers and mark schemes, organised by year.",
-    },
-    {
-      label: "Physics & Maths Tutor",
-      href: `https://www.physicsandmathstutor.com/?s=${encode(`${board} ${subjectName}`)}`,
-      description: "Papers organised by topic, plus revision notes (strong for Maths/Sciences).",
-    },
-    {
-      label: "Save My Exams",
-      href: `https://www.savemyexams.com/?s=${encode(`${board} ${level} ${subjectName}`)}`,
-      description: "Topic questions, model answers and revision notes.",
-    },
-  ];
+  const pastPapers: ResourceLink[] = subjectPastPaperLink
+    ? [
+        {
+          label: subjectPastPaperLink.label,
+          href: subjectPastPaperLink.href,
+          description: "Direct link to the full past-paper archive for this exact subject/level.",
+        },
+      ]
+    : [
+        {
+          label: `${board} official past papers hub`,
+          href: BOARD_PAST_PAPERS_HUB[board] ?? `https://www.google.com/search?q=${encode(`${query} past papers`)}`,
+          description: "Official past papers, mark schemes and examiner reports.",
+        },
+        {
+          label: "All past papers (direct PDF search)",
+          href: `https://www.google.com/search?q=${encode(`${query} past papers all sessions mark scheme`)}&tbs=filetype:pdf`,
+          description: "Search narrowed to PDF files only — fastest way to pull every session's paper.",
+        },
+        {
+          label: "Past Papers on PapaCambridge",
+          href: `https://pastpapers.papacambridge.com/?s=${encode(`${board} ${subjectName} ${level}`)}`,
+          description: "Free searchable archive of past papers and mark schemes, organised by year.",
+        },
+        {
+          label: "Physics & Maths Tutor",
+          href: `https://www.physicsandmathstutor.com/?s=${encode(`${board} ${subjectName}`)}`,
+          description: "Papers organised by topic, plus revision notes (strong for Maths/Sciences).",
+        },
+        {
+          label: "Save My Exams",
+          href: `https://www.savemyexams.com/?s=${encode(`${board} ${level} ${subjectName}`)}`,
+          description: "Topic questions, model answers and revision notes.",
+        },
+      ];
 
   const known = getKnownPlaylist(subjectName);
   const videos: ResourceLink[] = [
