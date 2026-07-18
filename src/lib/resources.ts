@@ -48,6 +48,20 @@ const KNOWN_FULL_PLAYLISTS: Record<string, { label: string; href: string }> = {
   },
 };
 
+// Direct, verified past-paper hub URLs for specific subjects (provided/
+// confirmed by the user), used instead of the generic search link when
+// available.
+const SUBJECT_PAST_PAPER_LINKS: Record<string, { label: string; href: string }> = {
+  "computer science": {
+    label: "O Level Computer Science (2210) — PapaCambridge",
+    href: "https://pastpapers.papacambridge.com/papers/caie/o-level-computer-science-2210",
+  },
+};
+
+function getSubjectPastPaperLink(subjectName: string) {
+  return SUBJECT_PAST_PAPER_LINKS[subjectName.trim().toLowerCase()];
+}
+
 function encode(s: string) {
   return encodeURIComponent(s);
 }
@@ -84,7 +98,17 @@ export function getSubjectResources(opts: {
     },
   ];
 
+  const subjectPastPaperLink = getSubjectPastPaperLink(subjectName);
   const pastPapers: ResourceLink[] = [
+    ...(subjectPastPaperLink
+      ? [
+          {
+            label: subjectPastPaperLink.label,
+            href: subjectPastPaperLink.href,
+            description: "Direct link to the full past-paper archive for this exact subject/level.",
+          },
+        ]
+      : []),
     {
       label: `${board} official past papers hub`,
       href: BOARD_PAST_PAPERS_HUB[board] ?? `https://www.google.com/search?q=${encode(`${query} past papers`)}`,
