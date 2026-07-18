@@ -1,173 +1,155 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, Link, Outlet, useNavigate, useParams } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  doc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { Lightbulb, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Send, Sparkles, Lightbulb } from "lucide-react";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { useSubjects } from "@/lib/firestore-hooks";
-import { askExplainer } from "@/lib/explain.functions";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
 
 export const Route = createFileRoute("/_app/ask")({
   ssr: false,
-  component: AskPage,
+  component: AskLayout,
 });
 
-type ChatMessage = { role: "user" | "model"; text: string };
+export type AskThread = {
+  id: string;
+  title: string;
+  updatedAt?: { seconds: number } | null;
+};
 
-const STARTERS = [
-  "Explain photosynthesis like I'm new to biology",
-  "What's the difference between speed and velocity?",
-  "Help me understand this question without solving it for me",
-];
-
-function AskPage() {
+function AskLayout() {
   const { user } = useAuth();
-  const subjects = useSubjects(user?.uid);
-  const [subjectId, setSubjectId] = useState<string>("");
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [busy, setBusy] = useState(false);
-  const askFn = useServerFn(askExplainer);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const params = useParams({ strict: false }) as { threadId?: string };
+  const activeId = params.threadId;
+  const [threads, setThreads] = useState<AskThread[] | null>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, busy]);
+    if (!user) return;
+    const unsub = onSnapshot(
+      query(collection(db, "users", user.uid, "askThreads"), orderBy("updatedAt", "desc")),
+      (snap) => {
+        setThreads(
+          snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AskThread, "id">) })),
+        );
+      },
+    );
+    return unsub;
+  }, [user]);
 
-  const subjectName = subjects?.find((s) => s.id === subjectId)?.subjectName ?? "";
-
-  const send = async (text: string) => {
-    const question = text.trim();
-    if (!question || busy) return;
-    setInput("");
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", text: question }];
-    setMessages(nextMessages);
-    setBusy(true);
+  const createThread = async () => {
+    if (!user) return;
+    const id = crypto.randomUUID();
     try {
-      const result = await askFn({
-        data: {
-          subjectName,
-          question,
-          history: nextMessages.slice(0, -1).slice(-12),
-        },
+      await setDoc(doc(db, "users", user.uid, "askThreads", id), {
+        title: "New chat",
+        messages: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
-      setMessages((m) => [...m, { role: "model", text: result.reply }]);
-    } catch (err) {
-      toast.error((err as Error).message);
-      setMessages((m) => m.slice(0, -1));
-      setInput(question);
-    } finally {
-      setBusy(false);
+      navigate({ to: "/ask/$threadId", params: { threadId: id } });
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   };
 
+  const removeThread = async (id: string) => {
+    if (!user) return;
+    if (!confirm("Delete this conversation?")) return;
+    await deleteDoc(doc(db, "users", user.uid, "askThreads", id));
+    if (activeId === id) navigate({ to: "/ask" });
+  };
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-2rem)] max-w-3xl flex-col gap-4 p-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-3xl font-semibold">
-          <Lightbulb className="h-7 w-7 text-amber-500" /> Ask
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Explains and simplifies — never gives you the final answer to a graded question.
-          Paste a tricky question and it'll walk you through how to think about it instead.
-        </p>
-      </div>
-
-      {subjects && subjects.length > 0 && (
-        <select
-          value={subjectId}
-          onChange={(e) => setSubjectId(e.target.value)}
-          className="w-fit rounded-2xl border border-input bg-background px-3 py-1.5 text-sm"
-        >
-          <option value="">No specific subject</option>
-          {subjects.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.subjectName}
-            </option>
-          ))}
-        </select>
-      )}
-
-      <div className="flex-1 overflow-y-auto rounded-2xl border border-border bg-card p-4">
-        {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <Sparkles className="h-8 w-8 text-muted-foreground/50" />
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Ask about a concept you're stuck on, or paste a question you want explained (not solved).
-            </p>
-            <div className="flex flex-col gap-2">
-              {STARTERS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="rounded-full border border-border px-4 py-2 text-xs hover:bg-muted"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                  m.role === "user"
-                    ? "ml-auto whitespace-pre-wrap bg-primary text-primary-foreground"
-                    : "mr-auto bg-muted"
-                }`}
-              >
-                {m.role === "user" ? (
-                  m.text
-                ) : (
-                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-headings:mt-3 prose-headings:mb-2 prose-pre:my-2">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                    >
-                      {m.text}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            ))}
-            {busy && (
-              <div className="mr-auto max-w-[85%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
-                Thinking…
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-        className="flex gap-2"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about a concept or paste a question…"
-          className="flex-1 rounded-2xl border border-input bg-background px-4 py-2.5 text-sm"
-        />
+    <div className="mx-auto flex h-[calc(100vh-2rem)] max-w-6xl gap-4 p-2 sm:p-4">
+      <aside className="hidden md:flex w-64 flex-col rounded-2xl border border-border bg-card p-3">
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <Lightbulb className="h-5 w-5 text-amber-500" />
+          <span className="font-semibold text-sm">Ask</span>
+        </div>
         <button
-          type="submit"
-          disabled={busy || !input.trim()}
-          className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          onClick={createThread}
+          className="flex items-center gap-2 rounded-2xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
         >
-          <Send className="h-4 w-4" />
+          <Plus className="h-4 w-4" /> New chat
         </button>
-      </form>
+        <div className="mt-3 flex-1 overflow-y-auto space-y-1">
+          {threads === null ? (
+            <p className="px-2 py-4 text-xs text-muted-foreground">Loading…</p>
+          ) : threads.length === 0 ? (
+            <p className="px-2 py-4 text-xs text-muted-foreground">
+              No conversations yet. Start a new chat.
+            </p>
+          ) : (
+            threads.map((t) => {
+              const active = t.id === activeId;
+              return (
+                <div
+                  key={t.id}
+                  className={`group flex items-center gap-1 rounded-xl pr-1 ${
+                    active ? "bg-primary/10" : "hover:bg-muted"
+                  }`}
+                >
+                  <Link
+                    to="/ask/$threadId"
+                    params={{ threadId: t.id }}
+                    className="flex-1 flex items-center gap-2 rounded-xl px-2 py-2 text-xs truncate"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{t.title || "Untitled"}</span>
+                  </Link>
+                  <button
+                    onClick={() => removeThread(t.id)}
+                    className="opacity-0 group-hover:opacity-100 rounded-lg p-1 text-muted-foreground hover:text-destructive"
+                    aria-label="Delete conversation"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </aside>
+
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile top bar with thread picker */}
+        <div className="md:hidden mb-2 flex items-center gap-2">
+          <button
+            onClick={createThread}
+            className="flex items-center gap-1.5 rounded-2xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+          >
+            <Plus className="h-3.5 w-3.5" /> New
+          </button>
+          {threads && threads.length > 0 && (
+            <select
+              value={activeId ?? ""}
+              onChange={(e) => {
+                if (e.target.value)
+                  navigate({ to: "/ask/$threadId", params: { threadId: e.target.value } });
+              }}
+              className="flex-1 rounded-2xl border border-input bg-background px-3 py-1.5 text-xs"
+            >
+              <option value="">Select a chat…</option>
+              {threads.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title || "Untitled"}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <Outlet />
+      </div>
     </div>
   );
 }
