@@ -22,6 +22,7 @@ import { Route as AppCheckinRouteImport } from './routes/_app/checkin'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppAskRouteImport } from './routes/_app/ask'
 import { Route as AppSubjectsIndexRouteImport } from './routes/_app/subjects.index'
+import { Route as AppAskIndexRouteImport } from './routes/_app/ask.index'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -88,6 +89,11 @@ const AppSubjectsIndexRoute = AppSubjectsIndexRouteImport.update({
   path: '/subjects/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAskIndexRoute = AppAskIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAskRoute,
+} as any)
 const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
   id: '/subjects/$subjectId',
   path: '/subjects/$subjectId',
@@ -97,7 +103,7 @@ const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/ask': typeof AppAskRoute
+  '/ask': typeof AppAskRouteWithChildren
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
   '/command': typeof AppCommandRoute
@@ -107,12 +113,12 @@ export interface FileRoutesByFullPath {
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/ask/': typeof AppAskIndexRoute
   '/subjects/': typeof AppSubjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/ask': typeof AppAskRoute
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
   '/command': typeof AppCommandRoute
@@ -122,6 +128,7 @@ export interface FileRoutesByTo {
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/ask': typeof AppAskIndexRoute
   '/subjects': typeof AppSubjectsIndexRoute
 }
 export interface FileRoutesById {
@@ -129,7 +136,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_app/ask': typeof AppAskRoute
+  '/_app/ask': typeof AppAskRouteWithChildren
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/checkin': typeof AppCheckinRoute
   '/_app/command': typeof AppCommandRoute
@@ -139,6 +146,7 @@ export interface FileRoutesById {
   '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
+  '/_app/ask/': typeof AppAskIndexRoute
   '/_app/subjects/': typeof AppSubjectsIndexRoute
 }
 export interface FileRouteTypes {
@@ -156,12 +164,12 @@ export interface FileRouteTypes {
     | '/plan'
     | '/settings'
     | '/subjects/$subjectId'
+    | '/ask/'
     | '/subjects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/ask'
     | '/calendar'
     | '/checkin'
     | '/command'
@@ -171,6 +179,7 @@ export interface FileRouteTypes {
     | '/plan'
     | '/settings'
     | '/subjects/$subjectId'
+    | '/ask'
     | '/subjects'
   id:
     | '__root__'
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/_app/plan'
     | '/_app/settings'
     | '/_app/subjects/$subjectId'
+    | '/_app/ask/'
     | '/_app/subjects/'
   fileRoutesById: FileRoutesById
 }
@@ -289,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubjectsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ask/': {
+      id: '/_app/ask/'
+      path: '/'
+      fullPath: '/ask/'
+      preLoaderRoute: typeof AppAskIndexRouteImport
+      parentRoute: typeof AppAskRoute
+    }
     '/_app/subjects/$subjectId': {
       id: '/_app/subjects/$subjectId'
       path: '/subjects/$subjectId'
@@ -299,8 +316,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppAskRouteChildren {
+  AppAskIndexRoute: typeof AppAskIndexRoute
+}
+
+const AppAskRouteChildren: AppAskRouteChildren = {
+  AppAskIndexRoute: AppAskIndexRoute,
+}
+
+const AppAskRouteWithChildren =
+  AppAskRoute._addFileChildren(AppAskRouteChildren)
+
 interface AppRouteChildren {
-  AppAskRoute: typeof AppAskRoute
+  AppAskRoute: typeof AppAskRouteWithChildren
   AppCalendarRoute: typeof AppCalendarRoute
   AppCheckinRoute: typeof AppCheckinRoute
   AppCommandRoute: typeof AppCommandRoute
@@ -314,7 +342,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAskRoute: AppAskRoute,
+  AppAskRoute: AppAskRouteWithChildren,
   AppCalendarRoute: AppCalendarRoute,
   AppCheckinRoute: AppCheckinRoute,
   AppCommandRoute: AppCommandRoute,
