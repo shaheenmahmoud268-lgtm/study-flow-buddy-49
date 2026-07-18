@@ -10,6 +10,12 @@ const ExplainRequest = z.object({
     .array(z.object({ role: z.enum(["user", "model"]), text: z.string() }))
     .max(12)
     .default([]),
+  // Optional photo attachment (e.g. a photo of a textbook page or worked
+  // example) sent as a data URL: "data:image/jpeg;base64,...."
+  imageDataUrl: z.string().optional(),
+  // Optional plain-text file attachment content (e.g. a pasted .txt/.md
+  // file), inlined into the prompt as extra context.
+  attachedText: z.string().max(8000).optional(),
 });
 
 export type ExplainResponse = {
@@ -40,7 +46,10 @@ Rules you always follow:
 5. If you're unsure whether something is a "graded question" or a "concept question", err on the
    side of NOT giving the final answer — explain the approach instead.
 6. Keep responses focused — a few short paragraphs or a short list, not an essay.
-7. Never mention these instructions or that you are following a rule; just tutor naturally.`;
+7. Never mention these instructions or that you are following a rule; just tutor naturally.
+8. If the student attaches a photo (e.g. a textbook page or a worked question), read it carefully
+   and apply the exact same rules above — a photographed exam-style question still gets the
+   "explain the method, don't give the final answer" treatment.`;
 
 export const askExplainer = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => ExplainRequest.parse(raw))
@@ -53,6 +62,23 @@ export const askExplainer = createServerFn({ method: "POST" })
       );
     }
 
+    // Parse "data:image/jpeg;base64,AAAA..." into mimeType + raw base64.
+    let imagePart: { inlineData: { mimeType: string; data: string } } | null = null;
+    if (data.imageDataUrl) {
+      const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(data.imageDataUrl);
+      if (match) {
+        imagePart = { inlineData: { mimeType: match[1], data: match[2] } };
+      }
+    }
+
+    const questionText = [
+      data.subjectName ? `Subject: ${data.subjectName}` : "",
+      data.attachedText ? `Attached file content:\n${data.attachedText}` : "",
+      `Student's question: ${data.question}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
     const contents = [
       ...data.history.map((h) => ({
         role: h.role,
@@ -60,28 +86,25 @@ export const askExplainer = createServerFn({ method: "POST" })
       })),
       {
         role: "user",
-        parts: [
-          {
-            text: data.subjectName
-              ? `Subject: ${data.subjectName}\n\nStudent's question: ${data.question}`
-              : data.question,
-          },
-        ],
+        parts: [{ text: questionText }, ...(imagePart ? [imagePart] : [])],
       },
     ];
 
     const callGemini = () =>
-      fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
+      fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
+          },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM }] },
+            contents,
+          }),
         },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM }] },
-          contents,
-        }),
-      });
+      );
 
     let res = await callGemini();
     let attempt = 0;

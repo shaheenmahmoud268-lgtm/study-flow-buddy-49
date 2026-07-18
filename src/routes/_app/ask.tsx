@@ -11,7 +11,18 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { Lightbulb, Plus, MessageSquare, Trash2, Pin, PinOff, Search, X } from "lucide-react";
+import {
+  Lightbulb,
+  Plus,
+  MessageSquare,
+  Trash2,
+  Pin,
+  PinOff,
+  Search,
+  X,
+  Pencil,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +49,8 @@ function AskLayout() {
   const activeId = params.threadId;
   const [threads, setThreads] = useState<AskThread[] | null>(null);
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +94,22 @@ function AskLayout() {
     });
   };
 
+  const startRename = (t: AskThread) => {
+    setEditingId(t.id);
+    setEditingTitle(t.title || "");
+  };
+
+  const saveRename = async (id: string) => {
+    if (!user) return;
+    const nextTitle = editingTitle.trim() || "Untitled";
+    setEditingId(null);
+    try {
+      await updateDoc(doc(db, "users", user.uid, "askThreads", id), { title: nextTitle });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
   // Search + pinned sort.
   const q = search.trim().toLowerCase();
   const results = useMemo(() => {
@@ -109,6 +138,29 @@ function AskLayout() {
   const renderRow = (t: AskThread) => {
     const active = t.id === activeId;
     const snippet = results.matches.get(t.id);
+    if (editingId === t.id) {
+      return (
+        <div key={t.id} className="flex items-center gap-1 rounded-xl px-2 py-1.5 bg-primary/5">
+          <input
+            autoFocus
+            value={editingTitle}
+            onChange={(e) => setEditingTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveRename(t.id);
+              if (e.key === "Escape") setEditingId(null);
+            }}
+            className="flex-1 min-w-0 rounded-lg border border-input bg-background px-2 py-1 text-xs"
+          />
+          <button
+            onClick={() => saveRename(t.id)}
+            className="rounded-lg p-1 text-primary hover:bg-muted"
+            aria-label="Save name"
+          >
+            <Check className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      );
+    }
     return (
       <div
         key={t.id}
@@ -133,6 +185,14 @@ function AskLayout() {
             )}
           </span>
         </Link>
+        <button
+          onClick={() => startRename(t)}
+          className="opacity-0 group-hover:opacity-100 rounded-lg p-1 text-muted-foreground hover:text-primary"
+          aria-label="Rename conversation"
+          title="Rename"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
         <button
           onClick={() => togglePin(t)}
           className="opacity-0 group-hover:opacity-100 rounded-lg p-1 text-muted-foreground hover:text-amber-500"
