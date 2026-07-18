@@ -6,6 +6,11 @@ import { Send, Sparkles, Lightbulb } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useSubjects } from "@/lib/firestore-hooks";
 import { askExplainer } from "@/lib/explain.functions";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 export const Route = createFileRoute("/_app/ask")({
   ssr: false,
