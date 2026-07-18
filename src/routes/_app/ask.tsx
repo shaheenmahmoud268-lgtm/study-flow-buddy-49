@@ -44,9 +44,7 @@ function AskLayout() {
     const unsub = onSnapshot(
       query(collection(db, "users", user.uid, "askThreads"), orderBy("updatedAt", "desc")),
       (snap) => {
-        setThreads(
-          snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AskThread, "id">) })),
-        );
+        setThreads(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AskThread, "id">) })));
       },
     );
     return unsub;
@@ -155,7 +153,7 @@ function AskLayout() {
   };
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-2rem)] max-w-6xl gap-4 p-2 sm:p-4">
+    <div className="mx-auto flex h-[calc(100vh-10rem)] sm:h-[calc(100vh-8rem)] lg:h-[calc(100vh-4rem)] max-w-6xl gap-4 p-2 sm:p-4">
       <aside className="hidden md:flex w-64 flex-col rounded-2xl border border-border bg-card p-3">
         <div className="mb-3 flex items-center gap-2 px-1">
           <Lightbulb className="h-5 w-5 text-amber-500" />
