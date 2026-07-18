@@ -117,13 +117,24 @@ function AskPage() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                   m.role === "user"
-                    ? "ml-auto bg-primary text-primary-foreground"
+                    ? "ml-auto whitespace-pre-wrap bg-primary text-primary-foreground"
                     : "mr-auto bg-muted"
                 }`}
               >
-                {m.text}
+                {m.role === "user" ? (
+                  m.text
+                ) : (
+                  <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-headings:mt-3 prose-headings:mb-2 prose-pre:my-2">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                    >
+                      {m.text}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             ))}
             {busy && (
