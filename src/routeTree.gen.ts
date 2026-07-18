@@ -20,6 +20,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCommandRouteImport } from './routes/_app/command'
 import { Route as AppCheckinRouteImport } from './routes/_app/checkin'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
+import { Route as AppAskRouteImport } from './routes/_app/ask'
 import { Route as AppSubjectsIndexRouteImport } from './routes/_app/subjects.index'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
 
@@ -77,6 +78,11 @@ const AppCalendarRoute = AppCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAskRoute = AppAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSubjectsIndexRoute = AppSubjectsIndexRouteImport.update({
   id: '/subjects/',
   path: '/subjects/',
@@ -91,6 +97,7 @@ const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ask': typeof AppAskRoute
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
   '/command': typeof AppCommandRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ask': typeof AppAskRoute
   '/calendar': typeof AppCalendarRoute
   '/checkin': typeof AppCheckinRoute
   '/command': typeof AppCommandRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/ask': typeof AppAskRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/checkin': typeof AppCheckinRoute
   '/_app/command': typeof AppCommandRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ask'
     | '/calendar'
     | '/checkin'
     | '/command'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/ask'
     | '/calendar'
     | '/checkin'
     | '/command'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/ask'
     | '/_app/calendar'
     | '/_app/checkin'
     | '/_app/command'
@@ -263,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ask': {
+      id: '/_app/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AppAskRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/subjects/': {
       id: '/_app/subjects/'
       path: '/subjects'
@@ -281,6 +300,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAskRoute: typeof AppAskRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppCheckinRoute: typeof AppCheckinRoute
   AppCommandRoute: typeof AppCommandRoute
@@ -294,6 +314,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAskRoute: AppAskRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppCheckinRoute: AppCheckinRoute,
   AppCommandRoute: AppCommandRoute,
