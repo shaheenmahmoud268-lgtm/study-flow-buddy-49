@@ -24,6 +24,7 @@ import { Route as AppAskRouteImport } from './routes/_app/ask'
 import { Route as AppSubjectsIndexRouteImport } from './routes/_app/subjects.index'
 import { Route as AppAskIndexRouteImport } from './routes/_app/ask.index'
 import { Route as AppSubjectsSubjectIdRouteImport } from './routes/_app/subjects.$subjectId'
+import { Route as AppAskThreadIdRouteImport } from './routes/_app/ask.$threadId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -99,6 +100,11 @@ const AppSubjectsSubjectIdRoute = AppSubjectsSubjectIdRouteImport.update({
   path: '/subjects/$subjectId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAskThreadIdRoute = AppAskThreadIdRouteImport.update({
+  id: '/$threadId',
+  path: '/$threadId',
+  getParentRoute: () => AppAskRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/focus': typeof AppFocusRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
+  '/ask/$threadId': typeof AppAskThreadIdRoute
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
   '/ask/': typeof AppAskIndexRoute
   '/subjects/': typeof AppSubjectsIndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/focus': typeof AppFocusRoute
   '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
+  '/ask/$threadId': typeof AppAskThreadIdRoute
   '/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
   '/ask': typeof AppAskIndexRoute
   '/subjects': typeof AppSubjectsIndexRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_app/focus': typeof AppFocusRoute
   '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/ask/$threadId': typeof AppAskThreadIdRoute
   '/_app/subjects/$subjectId': typeof AppSubjectsSubjectIdRoute
   '/_app/ask/': typeof AppAskIndexRoute
   '/_app/subjects/': typeof AppSubjectsIndexRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/focus'
     | '/plan'
     | '/settings'
+    | '/ask/$threadId'
     | '/subjects/$subjectId'
     | '/ask/'
     | '/subjects/'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/focus'
     | '/plan'
     | '/settings'
+    | '/ask/$threadId'
     | '/subjects/$subjectId'
     | '/ask'
     | '/subjects'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_app/focus'
     | '/_app/plan'
     | '/_app/settings'
+    | '/_app/ask/$threadId'
     | '/_app/subjects/$subjectId'
     | '/_app/ask/'
     | '/_app/subjects/'
@@ -313,14 +325,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubjectsSubjectIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ask/$threadId': {
+      id: '/_app/ask/$threadId'
+      path: '/$threadId'
+      fullPath: '/ask/$threadId'
+      preLoaderRoute: typeof AppAskThreadIdRouteImport
+      parentRoute: typeof AppAskRoute
+    }
   }
 }
 
 interface AppAskRouteChildren {
+  AppAskThreadIdRoute: typeof AppAskThreadIdRoute
   AppAskIndexRoute: typeof AppAskIndexRoute
 }
 
 const AppAskRouteChildren: AppAskRouteChildren = {
+  AppAskThreadIdRoute: AppAskThreadIdRoute,
   AppAskIndexRoute: AppAskIndexRoute,
 }
 
