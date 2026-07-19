@@ -105,8 +105,8 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-0 lg:pl-64">
       {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-border bg-sidebar px-4 py-6">
-        <div className="flex items-center gap-2 px-2 text-primary">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-6">
+        <div className="flex items-center gap-2 px-2 text-primary text-glow-primary">
           <Sparkles className="h-5 w-5" />
           <span className="font-semibold">StudyFlow</span>
         </div>
@@ -125,11 +125,13 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
               <Link
                 key={n.to}
                 to={n.to}
-                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm ${
-                  active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                className={`relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors ${
+                  active
+                    ? "glow-primary bg-primary/15 text-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-full before:bg-primary"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
-                <n.icon className="h-4 w-4" />
+                <n.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
                 {n.label}
               </Link>
             );

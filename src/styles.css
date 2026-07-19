@@ -59,6 +59,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
 }
 
 :root {
@@ -95,41 +97,50 @@
   --sidebar-accent-foreground: oklch(0.28 0.06 220);
   --sidebar-border: oklch(0.92 0.015 250);
   --sidebar-ring: oklch(0.55 0.09 255);
+  --success: oklch(0.6 0.13 165);
+  --success-foreground: oklch(0.985 0.005 85);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Deep navy-charcoal, not flat black — like a study room lit by one lamp. */
+  --background: oklch(0.15 0.02 260);
+  --foreground: oklch(0.94 0.008 250);
+  --card: oklch(0.195 0.024 260);
+  --card-foreground: oklch(0.94 0.008 250);
+  --popover: oklch(0.195 0.024 260);
+  --popover-foreground: oklch(0.94 0.008 250);
+  /* Focused indigo-violet — the app's "in the zone" color. */
+  --primary: oklch(0.62 0.19 275);
+  --primary-foreground: oklch(0.99 0.01 275);
+  --secondary: oklch(0.26 0.03 260);
+  --secondary-foreground: oklch(0.94 0.008 250);
+  --muted: oklch(0.23 0.02 260);
+  --muted-foreground: oklch(0.66 0.02 255);
+  /* Warm amber — reserved for readiness/progress signals. */
+  --accent: oklch(0.78 0.14 80);
+  --accent-foreground: oklch(0.2 0.03 80);
+  --destructive: oklch(0.66 0.19 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 11%);
+  --ring: oklch(0.62 0.19 275);
+  --chart-1: oklch(0.62 0.19 275);
+  --chart-2: oklch(0.72 0.13 175);
+  --chart-3: oklch(0.78 0.14 80);
+  --chart-4: oklch(0.66 0.19 25);
+  --chart-5: oklch(0.58 0.19 300);
+  /* Sidebar sits a shade darker than page background for depth. */
+  --sidebar: oklch(0.125 0.02 260);
+  --sidebar-foreground: oklch(0.94 0.008 250);
+  --sidebar-primary: oklch(0.62 0.19 275);
+  --sidebar-primary-foreground: oklch(0.99 0.01 275);
+  --sidebar-accent: oklch(0.22 0.03 270);
+  --sidebar-accent-foreground: oklch(0.94 0.008 250);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.62 0.19 275);
+  /* Success/teal for completed states, used sparingly outside the token system. */
+  --success: oklch(0.72 0.13 175);
+  --success-foreground: oklch(0.16 0.03 175);
 }
 
 @layer base {
@@ -140,5 +151,31 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+@layer utilities {
+  /*
+   * Signature element: a soft ambient "instrument glow" — like a gauge lit
+   * up in a dark room. Used sparingly on the numbers that matter most
+   * (streak, readiness, focus minutes), never as generic decoration.
+   */
+  .glow-primary {
+    box-shadow: 0 0 0 1px oklch(0.62 0.19 275 / 12%) inset,
+      0 8px 32px -12px oklch(0.62 0.19 275 / 55%);
+  }
+  .glow-amber {
+    box-shadow: 0 0 0 1px oklch(0.78 0.14 80 / 14%) inset,
+      0 8px 32px -12px oklch(0.78 0.14 80 / 45%);
+  }
+  .glow-success {
+    box-shadow: 0 0 0 1px oklch(0.72 0.13 175 / 14%) inset,
+      0 8px 32px -12px oklch(0.72 0.13 175 / 45%);
+  }
+  .text-glow-primary {
+    text-shadow: 0 0 24px oklch(0.62 0.19 275 / 50%);
+  }
+  .text-glow-amber {
+    text-shadow: 0 0 24px oklch(0.78 0.14 80 / 45%);
   }
 }

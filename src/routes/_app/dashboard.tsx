@@ -100,16 +100,16 @@ function Dashboard() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="glow-primary rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Flame className="h-4 w-4 text-primary" /> Streak
           </div>
-          <p className="mt-2 text-4xl font-semibold">{streak}</p>
+          <p className="mt-2 text-4xl font-semibold text-glow-primary">{streak}</p>
           <p className="text-sm text-muted-foreground">days in a row</p>
         </div>
         <Link
           to="/focus"
-          className="rounded-2xl border border-border bg-primary text-primary-foreground p-5 shadow-sm hover:opacity-90 flex flex-col justify-between"
+          className="glow-primary rounded-2xl border border-border bg-primary text-primary-foreground p-5 hover:opacity-90 flex flex-col justify-between"
         >
           <div className="flex items-center gap-2 text-sm opacity-90">
             <Timer className="h-4 w-4" /> Focus session
@@ -138,11 +138,8 @@ function Dashboard() {
                 </div>
                 <div className="mt-1.5 h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${r.pct}%`,
-                      background: `linear-gradient(90deg, oklch(0.78 0.16 70), oklch(0.7 0.18 145))`,
-                    }}
+                    className="h-full rounded-full transition-all bg-gradient-to-r from-accent to-success"
+                    style={{ width: `${r.pct}%` }}
                   />
                 </div>
               </li>
