@@ -222,7 +222,7 @@ function AskLayout() {
           {t.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
         </button>
         <button
-          onClick={() => removeThread(t.id)}
+          onClick={() => setPendingDeleteId(t.id)}
           className="opacity-0 group-hover:opacity-100 rounded-lg p-1 text-muted-foreground hover:text-destructive"
           aria-label="Delete conversation"
         >
