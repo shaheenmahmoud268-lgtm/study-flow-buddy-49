@@ -23,6 +23,8 @@ import {
   Crown,
   Brain,
   MessageCircleQuestion,
+  Menu,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
@@ -83,6 +85,11 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
   const isCeo = role === "ceo";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
 
   const nav = [
     { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -148,7 +155,7 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
       {/* Bottom nav (mobile) */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur px-2 py-2">
         <div className="mx-auto flex max-w-md justify-between gap-1">
-          {nav.slice(0, 6).map((n) => {
+          {nav.slice(0, 4).map((n) => {
             const active = pathname === n.to || pathname.startsWith(n.to + "/");
             return (
               <Link
@@ -163,8 +170,69 @@ function Shell({ name, role }: { name: string; role?: "ceo" | "student" }) {
               </Link>
             );
           })}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] ${
+              nav.slice(4).some((n) => pathname === n.to || pathname.startsWith(n.to + "/"))
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+          >
+            <Menu className="h-5 w-5" />
+            More
+          </button>
         </div>
       </nav>
+
+      {/* "More" drawer (mobile) — everything past the first 4 tabs, so no
+          page is ever unreachable on small screens. */}
+      {moreOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <button
+            aria-label="Close menu"
+            onClick={() => setMoreOpen(false)}
+            className="absolute inset-0 bg-black/40"
+          />
+          <div className="relative rounded-t-3xl border-t border-border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl">
+            <div className="flex items-center justify-between px-1 pb-2">
+              <span className="text-sm font-semibold">More</span>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {nav.slice(4).map((n) => {
+                const active = pathname === n.to || pathname.startsWith(n.to + "/");
+                return (
+                  <Link
+                    key={n.to}
+                    to={n.to}
+                    className={`flex flex-col items-center gap-1 rounded-2xl border px-2 py-3 text-xs ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <n.icon className="h-5 w-5" />
+                    {n.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={handleSignOut}
+                className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-background px-2 py-3 text-xs text-muted-foreground hover:bg-muted"
+              >
+                <LogOut className="h-5 w-5" />
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10">
         <Outlet />

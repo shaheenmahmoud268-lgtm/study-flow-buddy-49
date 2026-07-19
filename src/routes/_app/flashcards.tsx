@@ -73,9 +73,9 @@ function FlashcardsPage() {
               nextReviewDate: data.nextReviewDate ?? todayISO(),
               lastReviewed: data.lastReviewed ?? null,
             };
-          })
+          }),
         );
-      }
+      },
     );
     return unsub;
   }, [uid, selectedSubject, subjects]);
@@ -83,7 +83,7 @@ function FlashcardsPage() {
   const today = todayISO();
   const dueCards = useMemo(
     () => (showAll ? cards : cards.filter((c) => c.nextReviewDate <= today)),
-    [cards, showAll, today]
+    [cards, showAll, today],
   );
 
   const addCard = async () => {
@@ -116,21 +116,18 @@ function FlashcardsPage() {
       else intervalDays = Math.round(intervalDays * easeFactor);
       easeFactor = Math.max(
         1.3,
-        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)),
       );
     }
     const nextReviewDate = addDaysISO(todayISO(), intervalDays);
     try {
-      await updateDoc(
-        doc(db, "users", uid, "subjects", card.subjectId, "flashcards", card.id),
-        {
-          easeFactor,
-          intervalDays,
-          repetitions,
-          nextReviewDate,
-          lastReviewed: todayISO(),
-        }
-      );
+      await updateDoc(doc(db, "users", uid, "subjects", card.subjectId, "flashcards", card.id), {
+        easeFactor,
+        intervalDays,
+        repetitions,
+        nextReviewDate,
+        lastReviewed: todayISO(),
+      });
       setRevealed(false);
       if (studyIdx + 1 >= dueCards.length) {
         setStudying(false);
@@ -178,7 +175,7 @@ function FlashcardsPage() {
             Show answer
           </button>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { label: "Again", q: 0 as const, cls: "bg-destructive text-destructive-foreground" },
               { label: "Hard", q: 3 as const, cls: "bg-secondary text-secondary-foreground" },
@@ -279,9 +276,7 @@ function FlashcardsPage() {
           )}
         </div>
         <ul className="mt-4 space-y-2">
-          {cards.length === 0 && (
-            <p className="text-sm text-muted-foreground">No cards yet.</p>
-          )}
+          {cards.length === 0 && <p className="text-sm text-muted-foreground">No cards yet.</p>}
           {cards.map((c) => (
             <li
               key={c.id}
@@ -293,7 +288,7 @@ function FlashcardsPage() {
                 onClick={async () => {
                   if (!uid) return;
                   await deleteDoc(
-                    doc(db, "users", uid, "subjects", c.subjectId, "flashcards", c.id)
+                    doc(db, "users", uid, "subjects", c.subjectId, "flashcards", c.id),
                   );
                 }}
                 className="p-1"

@@ -1,18 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import {
-  DndContext,
-  useDraggable,
-  useDroppable,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  addDoc,
-  collection,
-  doc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
+import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
+import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -72,10 +61,9 @@ function CalendarPage() {
     const newDate = e.over.id as string;
     if (t.dueDate === newDate) return;
     try {
-      await updateDoc(
-        doc(db, "users", uid, "subjects", t.subjectId, "tasks", t.id),
-        { dueDate: newDate }
-      );
+      await updateDoc(doc(db, "users", uid, "subjects", t.subjectId, "tasks", t.id), {
+        dueDate: newDate,
+      });
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -119,7 +107,7 @@ function CalendarPage() {
               dueDate: due,
               isComplete: false,
               createdAt: serverTimestamp(),
-            })
+            }),
           );
         }
       }
@@ -187,34 +175,38 @@ function CalendarPage() {
       </div>
 
       <DndContext onDragEnd={handleDragEnd}>
-        <div
-          className={`grid gap-2 ${
-            view === "week" ? "grid-cols-1 sm:grid-cols-7" : "grid-cols-7"
-          }`}
-        >
-          {days.map((d) => {
-            const iso = toISO(d);
-            const list = byDate.get(iso) ?? [];
-            const isToday = iso === todayISO();
-            return (
-              <Droppable key={iso} id={iso}>
-                <div
-                  className={`min-h-24 rounded-2xl border p-2 ${
-                    isToday ? "border-primary bg-primary/5" : "border-border bg-card"
-                  }`}
-                >
-                  <div className="text-xs text-muted-foreground">
-                    {d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}
+        <div className={view === "month" ? "overflow-x-auto -mx-1 px-1" : ""}>
+          <div
+            className={`grid gap-1.5 sm:gap-2 ${
+              view === "week"
+                ? "grid-cols-1 sm:grid-cols-7"
+                : "grid-cols-7 min-w-[560px] sm:min-w-0"
+            }`}
+          >
+            {days.map((d) => {
+              const iso = toISO(d);
+              const list = byDate.get(iso) ?? [];
+              const isToday = iso === todayISO();
+              return (
+                <Droppable key={iso} id={iso}>
+                  <div
+                    className={`min-h-20 sm:min-h-24 rounded-2xl border p-1.5 sm:p-2 ${
+                      isToday ? "border-primary bg-primary/5" : "border-border bg-card"
+                    }`}
+                  >
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">
+                      {d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {list.map((t) => (
+                        <DraggableTask key={t.id} task={t} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-1 space-y-1">
-                    {list.map((t) => (
-                      <DraggableTask key={t.id} task={t} />
-                    ))}
-                  </div>
-                </div>
-              </Droppable>
-            );
-          })}
+                </Droppable>
+              );
+            })}
+          </div>
         </div>
       </DndContext>
     </div>
@@ -244,7 +236,7 @@ function DraggableTask({ task }: { task: Task }) {
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className={`cursor-grab rounded-lg px-2 py-1 text-[11px] ${
+      className={`cursor-grab truncate rounded-lg px-2 py-1 text-[11px] ${
         task.type === "revision"
           ? "bg-accent text-accent-foreground"
           : "bg-secondary text-secondary-foreground"
