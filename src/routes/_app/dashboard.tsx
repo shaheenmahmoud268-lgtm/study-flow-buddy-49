@@ -138,7 +138,7 @@ function Dashboard() {
                 </div>
                 <div className="mt-1.5 h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all bg-gradient-to-r from-accent to-success"
+                    className="h-full rounded-full transition-all bg-gradient-to-r from-primary to-accent"
                     style={{ width: `${r.pct}%` }}
                   />
                 </div>
