@@ -190,7 +190,7 @@ function CalendarPage() {
               return (
                 <Droppable key={iso} id={iso}>
                   <div
-                    className={`min-h-20 sm:min-h-24 rounded-2xl border p-1.5 sm:p-2 ${
+                    className={`min-h-20 sm:min-h-24 h-full rounded-2xl border p-1.5 sm:p-2 ${
                       isToday ? "border-primary bg-primary/5" : "border-border bg-card"
                     }`}
                   >
@@ -236,7 +236,7 @@ function DraggableTask({ task }: { task: Task }) {
         transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className={`cursor-grab truncate rounded-lg px-2 py-1 text-[11px] ${
+      className={`cursor-grab whitespace-normal break-words rounded-lg px-2 py-1 text-[11px] leading-snug ${
         task.type === "revision"
           ? "bg-accent text-accent-foreground"
           : "bg-secondary text-secondary-foreground"
