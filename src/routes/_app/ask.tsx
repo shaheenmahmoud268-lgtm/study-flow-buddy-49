@@ -26,6 +26,16 @@ import {
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/ask")({
   ssr: false,
@@ -51,6 +61,7 @@ function AskLayout() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -80,12 +91,21 @@ function AskLayout() {
     }
   };
 
-  const removeThread = async (id: string) => {
-    if (!user) return;
-    if (!confirm("Delete this conversation?")) return;
-    await deleteDoc(doc(db, "users", user.uid, "askThreads", id));
-    if (activeId === id) navigate({ to: "/ask" });
+  const confirmDeleteThread = async () => {
+    if (!user || !pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "askThreads", id));
+      if (activeId === id) navigate({ to: "/ask" });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
+
+  const pendingDeleteThread = pendingDeleteId
+    ? (threads ?? []).find((t) => t.id === pendingDeleteId)
+    : null;
 
   const togglePin = async (t: AskThread) => {
     if (!user) return;
@@ -202,7 +222,7 @@ function AskLayout() {
           {t.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
         </button>
         <button
-          onClick={() => removeThread(t.id)}
+          onClick={() => setPendingDeleteId(t.id)}
           className="opacity-0 group-hover:opacity-100 rounded-lg p-1 text-muted-foreground hover:text-destructive"
           aria-label="Delete conversation"
         >
@@ -318,6 +338,33 @@ function AskLayout() {
         </div>
         <Outlet />
       </div>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteThread?.title
+                ? `“${pendingDeleteThread.title}” and all of its messages will be permanently removed. This can't be undone.`
+                : "This conversation and all of its messages will be permanently removed. This can't be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteThread}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
