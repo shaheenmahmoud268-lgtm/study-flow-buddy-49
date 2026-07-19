@@ -91,12 +91,21 @@ function AskLayout() {
     }
   };
 
-  const removeThread = async (id: string) => {
-    if (!user) return;
-    if (!confirm("Delete this conversation?")) return;
-    await deleteDoc(doc(db, "users", user.uid, "askThreads", id));
-    if (activeId === id) navigate({ to: "/ask" });
+  const confirmDeleteThread = async () => {
+    if (!user || !pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "askThreads", id));
+      if (activeId === id) navigate({ to: "/ask" });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
+
+  const pendingDeleteThread = pendingDeleteId
+    ? (threads ?? []).find((t) => t.id === pendingDeleteId)
+    : null;
 
   const togglePin = async (t: AskThread) => {
     if (!user) return;
