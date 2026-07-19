@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth-context";
+import { ThemeProvider } from "../lib/theme-context";
 
 function NotFoundComponent() {
   return (
@@ -107,6 +108,13 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script
+          // Runs before paint so the saved theme applies immediately —
+          // otherwise there'd be a flash of the default theme first.
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('studyflow-theme');if(t==='light'){document.documentElement.classList.remove('dark');}else if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`,
+          }}
+        />
         <style>{`
           html, body { font-family: 'Inter', system-ui, sans-serif; }
           h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.01em; }
@@ -125,8 +133,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors />
+        <ThemeProvider>
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

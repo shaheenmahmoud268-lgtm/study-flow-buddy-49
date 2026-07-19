@@ -19,6 +19,7 @@ import { EXAM_BOARDS } from "@/lib/igcse";
 import { useSubjects, useAllTasks } from "@/lib/firestore-hooks";
 import { todayISO } from "@/lib/dates";
 import { createStudentAccount } from "@/lib/admin.functions";
+import { useTheme, THEMES } from "@/lib/theme-context";
 
 export const Route = createFileRoute("/_app/settings")({
   ssr: false,
@@ -169,6 +170,8 @@ function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Settings</h1>
+
+      <ThemePicker />
 
       {isCeo && (
         <section className="rounded-2xl border border-amber-400/40 bg-amber-400/5 p-5 shadow-sm">
@@ -329,5 +332,36 @@ function SettingsPage() {
         <LogOut className="h-4 w-4" /> Sign out
       </button>
     </div>
+  );
+}
+
+function ThemePicker() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 className="text-lg font-semibold">Theme</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Pick the look that feels right to you. Saved to your account, so it follows you across devices.
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTheme(t.id)}
+            className={`flex flex-col items-center gap-2 rounded-2xl border p-3 transition-colors ${
+              theme === t.id ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/40"
+            }`}
+          >
+            <span
+              className="h-10 w-10 rounded-full border border-white/10"
+              style={{
+                background: `radial-gradient(circle at 35% 30%, ${t.swatch}, ${t.bg})`,
+              }}
+            />
+            <span className="text-xs font-medium">{t.label}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
